@@ -1,4 +1,4 @@
-module github.com/v4t/gomboy
+module github.com/v4t/gomb
 
 go 1.14
 
