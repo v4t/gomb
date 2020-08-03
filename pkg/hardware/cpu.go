@@ -7,28 +7,16 @@ import (
 
 var memory = make([]byte, math.MaxUint16)
 
-// CPURegisters is collection of basic registers for cpu
-type CPURegisters struct {
-	A byte // accumulator
-	B byte
-	C byte
-	D byte
-	E byte
-	H byte
-	L byte
-	F byte // flags
-}
-
-// CPUClock represents cpu timer
-type CPUClock struct {
+// Clock represents cpu timer
+type Clock struct {
 	machine int
 	cpu     int
 }
 
 // CPU contains CPU state
 type CPU struct {
-	Registers CPURegisters
-	Clock     CPUClock
+	Registers Registers
+	Clock     Clock
 	PC        uint16
 	SP        uint16
 }
