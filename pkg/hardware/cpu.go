@@ -21,13 +21,14 @@ type CPU struct {
 	SP        uint16
 }
 
-// Run executes next CPU cycle
-func (cpu *CPU) Run() {
-	op := cpu.nextInstruction()
+// Execute next CPU cycle
+func (cpu *CPU) Execute() {
+	op := cpu.Fetch()
 	fmt.Println(op)
 }
 
-func (cpu *CPU) nextInstruction() byte {
+// Fetch next byte from memory
+func (cpu *CPU) Fetch() byte {
 	op := memory[cpu.PC]
 	cpu.PC++
 	return op
