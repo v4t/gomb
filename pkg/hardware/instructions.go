@@ -11,60 +11,55 @@ var Instructions = initInstr()
 func initInstr() []func(*CPU) {
 	var instr = make([]func(*CPU), 0x100)
 
-	for i := 0; i < len(instr); i++ {
-		instr[i] = func(cpu *CPU) {
-			log.Fatalf("Op code 0x%x not implemented yet", i)
-		}
-	}
-	instr[0x00] = nop        // NOP
-	instr[0x01] = loadNNToBC // LD BC,nn
-	instr[0x02] = nop        //
-	instr[0x03] = incBC      // INC BC
-	instr[0x04] = incB       // INC B
-	instr[0x05] = decB       // DEC B
-	instr[0x06] = nop
+	instr[0x00] = nop            // NOP
+	instr[0x01] = loadNNToBC     // LD BC,nn
+	instr[0x02] = nop            //
+	instr[0x03] = incBC          // INC BC
+	instr[0x04] = incB           // INC B
+	instr[0x05] = decB           // DEC B
+	instr[0x06] = load8BitValToB // LD B,n
 	instr[0x07] = nop
 	instr[0x08] = loadSPToAddressNN // LD (nn),SP
 	instr[0x09] = nop
 	instr[0x0a] = nop
-	instr[0x0b] = decBC // DEC BC
-	instr[0x0c] = incC  // INC C
-	instr[0x0d] = decC  // DEC C
-	instr[0x0e] = nop
+	instr[0x0b] = decBC          // DEC BC
+	instr[0x0c] = incC           // INC C
+	instr[0x0d] = decC           // DEC C
+	instr[0x0e] = load8BitValToC // LD C,n
 	instr[0x0f] = nop
 
 	instr[0x10] = nop
 	instr[0x11] = loadNNToDE // LD DE,nn
 	instr[0x12] = nop
-	instr[0x13] = incDE // INC DE
-	instr[0x14] = incD  // INC D
-	instr[0x15] = decD  // DEC D
-	instr[0x16] = nop
+	instr[0x13] = incDE          // INC DE
+	instr[0x14] = incD           // INC D
+	instr[0x15] = decD           // DEC D
+	instr[0x16] = load8BitValToD // LD D,n
 	instr[0x17] = nop
 	instr[0x18] = nop
 	instr[0x19] = nop
 	instr[0x1a] = nop
-	instr[0x1b] = decDE // DEC DE
-	instr[0x1c] = incE  // INC E
-	instr[0x1d] = decE  // DEC E
-	instr[0x1e] = nop
+	instr[0x1b] = decDE          // DEC DE
+	instr[0x1c] = incE           // INC E
+	instr[0x1d] = decE           // DEC E
+	instr[0x1e] = load8BitValToE // LD E,n
 	instr[0x1f] = nop
 
 	instr[0x20] = nop
 	instr[0x21] = loadNNToHL // LD HL,nn
 	instr[0x22] = nop
-	instr[0x23] = incHL // INC HL
-	instr[0x24] = incH  // INC H
-	instr[0x25] = decH  // DEC H
-	instr[0x26] = nop
+	instr[0x23] = incHL          // INC HL
+	instr[0x24] = incH           // INC H
+	instr[0x25] = decH           // DEC H
+	instr[0x26] = load8BitValToH // LD H,n
 	instr[0x27] = nop
 	instr[0x28] = nop
 	instr[0x29] = nop
 	instr[0x2a] = nop
-	instr[0x2b] = decHL // DEC HL
-	instr[0x2c] = incL  // INC L
-	instr[0x2d] = decL  // DEC L
-	instr[0x2e] = nop
+	instr[0x2b] = decHL          // DEC HL
+	instr[0x2c] = incL           // INC L
+	instr[0x2d] = decL           // DEC L
+	instr[0x2e] = load8BitValToL // LD L,n
 	instr[0x2f] = nop
 
 	instr[0x30] = nop
@@ -84,56 +79,56 @@ func initInstr() []func(*CPU) {
 	instr[0x3e] = nop
 	instr[0x3f] = nop
 
-	instr[0x40] = nop
-	instr[0x41] = nop
-	instr[0x42] = nop
-	instr[0x43] = nop
-	instr[0x44] = nop
-	instr[0x45] = nop
-	instr[0x46] = nop
-	instr[0x47] = nop
-	instr[0x48] = nop
-	instr[0x49] = nop
-	instr[0x4a] = nop
-	instr[0x4b] = nop
-	instr[0x4c] = nop
-	instr[0x4d] = nop
-	instr[0x4e] = nop
-	instr[0x4f] = nop
+	instr[0x40] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.B) } // LD B,B
+	instr[0x41] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.C) } // LD B,C
+	instr[0x42] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.D) } // LD B,D
+	instr[0x43] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.E) } // LD B,E
+	instr[0x44] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.H) } // LD B,H
+	instr[0x45] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.L) } // LD B,L
+	instr[0x46] = nop                                                                    // LD B,(HL)
+	instr[0x47] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.A) } // LD B,A
+	instr[0x48] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.B) } // LD C,B
+	instr[0x49] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.C) } // LD C,C
+	instr[0x4a] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.D) } // LD C,D
+	instr[0x4b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.E) } // LD C,E
+	instr[0x4c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.H) } // LD C,H
+	instr[0x4d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.L) } // LD C,L
+	instr[0x4e] = nop                                                                    // LD C,(HL)
+	instr[0x4f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.A) } // LD C,A
 
-	instr[0x50] = nop
-	instr[0x51] = nop
-	instr[0x52] = nop
-	instr[0x53] = nop
-	instr[0x54] = nop
-	instr[0x55] = nop
-	instr[0x56] = nop
-	instr[0x57] = nop
-	instr[0x58] = nop
-	instr[0x59] = nop
-	instr[0x5a] = nop
-	instr[0x5b] = nop
-	instr[0x5c] = nop
-	instr[0x5d] = nop
-	instr[0x5e] = nop
-	instr[0x5f] = nop
+	instr[0x50] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.B) } // LD D,B
+	instr[0x51] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.C) } // LD D,C
+	instr[0x52] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.D) } // LD D,D
+	instr[0x53] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.E) } // LD D,E
+	instr[0x54] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.H) } // LD D,H
+	instr[0x55] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.L) } // LD D,L
+	instr[0x56] = nop                                                                    // LD D,(HL)
+	instr[0x57] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.A) } // LD D,A
+	instr[0x58] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.B) } // LD E,B
+	instr[0x59] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.C) } // LD E,C
+	instr[0x5a] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.D) } // LD E,D
+	instr[0x5b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.E) } // LD E,E
+	instr[0x5c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.H) } // LD E,H
+	instr[0x5d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.L) } // LD E,L
+	instr[0x5e] = nop                                                                    // LD E,(HL)
+	instr[0x5f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.A) } // LD E,A
 
-	instr[0x60] = nop
-	instr[0x61] = nop
-	instr[0x62] = nop
-	instr[0x63] = nop
-	instr[0x64] = nop
-	instr[0x65] = nop
-	instr[0x66] = nop
-	instr[0x67] = nop
-	instr[0x68] = nop
-	instr[0x69] = nop
-	instr[0x6a] = nop
-	instr[0x6b] = nop
-	instr[0x6c] = nop
-	instr[0x6d] = nop
-	instr[0x6e] = nop
-	instr[0x6f] = nop
+	instr[0x60] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.B) } // LD H,B
+	instr[0x61] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.C) } // LD H,C
+	instr[0x62] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.D) } // LD H,D
+	instr[0x63] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.E) } // LD H,E
+	instr[0x64] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.H) } // LD H,H
+	instr[0x65] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.L) } // LD H,L
+	instr[0x66] = nop                                                                    // LD H,(HL)
+	instr[0x67] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.A) } // LD H,A
+	instr[0x68] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.B) } // LD L,B
+	instr[0x69] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.C) } // LD L,C
+	instr[0x6a] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.D) } // LD L,D
+	instr[0x6b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.E) } // LD L,E
+	instr[0x6c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.H) } // LD L,H
+	instr[0x6d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.L) } // LD L,L
+	instr[0x6e] = nop                                                                    // LD L,(HL)
+	instr[0x6f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.A) } // LD L,A
 
 	instr[0x70] = nop
 	instr[0x71] = nop
@@ -143,14 +138,14 @@ func initInstr() []func(*CPU) {
 	instr[0x75] = nop
 	instr[0x76] = nop
 	instr[0x77] = nop
-	instr[0x78] = nop
-	instr[0x79] = nop
-	instr[0x7a] = nop
-	instr[0x7b] = nop
-	instr[0x7c] = nop
-	instr[0x7d] = nop
-	instr[0x7e] = nop
-	instr[0x7f] = nop
+	instr[0x78] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.B) } // LD A,B
+	instr[0x79] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.C) } // LD A,C
+	instr[0x7a] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.D) } // LD A,D
+	instr[0x7b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.E) } // LD A,E
+	instr[0x7c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.H) } // LD A,H
+	instr[0x7d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.L) } // LD A,L
+	instr[0x7e] = nop                                                                    // LD A,(HL)
+	instr[0x7f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.A) } // LD A,A
 
 	instr[0x80] = nop
 	instr[0x81] = nop
@@ -348,9 +343,19 @@ func decNN(cpu *CPU, getNN func() uint16, setNN func(uint16)) {
 }
 
 /* 8-bit loads */
+func load8BitValToB(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.B) } // LD B,n
+func load8BitValToC(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.C) } // LD C,n
+func load8BitValToD(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.D) } // LD D,n
+func load8BitValToE(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.E) } // LD E,n
+func load8BitValToH(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.H) } // LD H,n
+func load8BitValToL(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.L) } // LD L,n
 
 func load8BitValueIntoN(cpu *CPU, n *byte) {
-	n = cpu.Fetch()
+	*n = cpu.Fetch()
+}
+
+func loadR2ToR1(cpu *CPU, r1, r2 *byte) {
+	*r1 = *r2
 }
 
 /* 16-bit loads */
