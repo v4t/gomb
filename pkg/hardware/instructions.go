@@ -11,43 +11,47 @@ var Instructions = initInstr()
 func initInstr() []func(*CPU) {
 	var instr = make([]func(*CPU), 0x100)
 
-	instr[0x00] = nop            // NOP
-	instr[0x01] = loadNNToBC     // LD BC,nn
-	instr[0x02] = nop            //
-	instr[0x03] = incBC          // INC BC
-	instr[0x04] = incB           // INC B
-	instr[0x05] = decB           // DEC B
-	instr[0x06] = load8BitValToB // LD B,n
+	instr[0x00] = nop                                                              // NOP
+	instr[0x01] = loadNNToBC                                                       // LD BC,nn
+	instr[0x02] = func(cpu *CPU) { MemWrite(cpu.Registers.BC(), cpu.Registers.A) } // LD (BC),A
+	instr[0x03] = incBC                                                            // INC BC
+	instr[0x04] = incB                                                             // INC B
+	instr[0x05] = decB                                                             // DEC B
+	instr[0x06] = load8BitValToB                                                   // LD B,n
 	instr[0x07] = nop
 	instr[0x08] = loadSPToAddressNN // LD (nn),SP
 	instr[0x09] = nop
-	instr[0x0a] = nop
-	instr[0x0b] = decBC          // DEC BC
-	instr[0x0c] = incC           // INC C
-	instr[0x0d] = decC           // DEC C
-	instr[0x0e] = load8BitValToC // LD C,n
+	instr[0x0a] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.BC()) } // LD A,(BC)
+	instr[0x0b] = decBC                                                            // DEC BC
+	instr[0x0c] = incC                                                             // INC C
+	instr[0x0d] = decC                                                             // DEC C
+	instr[0x0e] = load8BitValToC                                                   // LD C,n
 	instr[0x0f] = nop
 
 	instr[0x10] = nop
-	instr[0x11] = loadNNToDE // LD DE,nn
-	instr[0x12] = nop
-	instr[0x13] = incDE          // INC DE
-	instr[0x14] = incD           // INC D
-	instr[0x15] = decD           // DEC D
-	instr[0x16] = load8BitValToD // LD D,n
+	instr[0x11] = loadNNToDE                                                       // LD DE,nn
+	instr[0x12] = func(cpu *CPU) { MemWrite(cpu.Registers.DE(), cpu.Registers.A) } // LD (DE),A
+	instr[0x13] = incDE                                                            // INC DE
+	instr[0x14] = incD                                                             // INC D
+	instr[0x15] = decD                                                             // DEC D
+	instr[0x16] = load8BitValToD                                                   // LD D,n
 	instr[0x17] = nop
 	instr[0x18] = nop
 	instr[0x19] = nop
-	instr[0x1a] = nop
-	instr[0x1b] = decDE          // DEC DE
-	instr[0x1c] = incE           // INC E
-	instr[0x1d] = decE           // DEC E
-	instr[0x1e] = load8BitValToE // LD E,n
+	instr[0x1a] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.DE()) } // LD A,(DE)
+	instr[0x1b] = decDE                                                            // DEC DE
+	instr[0x1c] = incE                                                             // INC E
+	instr[0x1d] = decE                                                             // DEC E
+	instr[0x1e] = load8BitValToE                                                   // LD E,n
 	instr[0x1f] = nop
 
 	instr[0x20] = nop
 	instr[0x21] = loadNNToHL // LD HL,nn
-	instr[0x22] = nop
+	instr[0x22] = func(cpu *CPU) {
+		// LDI (HL),A
+		MemWrite(cpu.Registers.HL(), cpu.Registers.A)
+		cpu.Registers.SetHL(cpu.Registers.HL() + 1)
+	}
 	instr[0x23] = incHL          // INC HL
 	instr[0x24] = incH           // INC H
 	instr[0x25] = decH           // DEC H
@@ -55,7 +59,11 @@ func initInstr() []func(*CPU) {
 	instr[0x27] = nop
 	instr[0x28] = nop
 	instr[0x29] = nop
-	instr[0x2a] = nop
+	instr[0x2a] = func(cpu *CPU) {
+		// LDI A,(HL)
+		cpu.Registers.A = MemRead(cpu.Registers.HL())
+		cpu.Registers.SetHL(cpu.Registers.HL() + 1)
+	}
 	instr[0x2b] = decHL          // DEC HL
 	instr[0x2c] = incL           // INC L
 	instr[0x2d] = decL           // DEC L
@@ -64,19 +72,27 @@ func initInstr() []func(*CPU) {
 
 	instr[0x30] = nop
 	instr[0x31] = loadNNToSP // LD SP,nn
-	instr[0x32] = nop
+	instr[0x32] = func(cpu *CPU) {
+		// LDD (HL),A
+		MemWrite(cpu.Registers.HL(), cpu.Registers.A)
+		cpu.Registers.SetHL(cpu.Registers.HL() - 1)
+	}
 	instr[0x33] = incSP // INC SP
 	instr[0x34] = nop
 	instr[0x35] = nop
-	instr[0x36] = nop
+	instr[0x36] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Fetch()) } // LD (HL),n
 	instr[0x37] = nop
 	instr[0x38] = nop
 	instr[0x39] = nop
-	instr[0x3a] = nop
-	instr[0x3b] = decSP // DEC SP
-	instr[0x3c] = incA  // INC A
-	instr[0x3d] = decA  // DEC A
-	instr[0x3e] = nop
+	instr[0x3a] = func(cpu *CPU) {
+		// LDD A,(HL)
+		cpu.Registers.A = MemRead(cpu.Registers.HL())
+		cpu.Registers.SetHL(cpu.Registers.HL() - 1)
+	}
+	instr[0x3b] = decSP                                            // DEC SP
+	instr[0x3c] = incA                                             // INC A
+	instr[0x3d] = decA                                             // DEC A
+	instr[0x3e] = func(cpu *CPU) { cpu.Registers.A = cpu.Fetch() } // LD A,#
 	instr[0x3f] = nop
 
 	instr[0x40] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.B) } // LD B,B
@@ -85,7 +101,7 @@ func initInstr() []func(*CPU) {
 	instr[0x43] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.E) } // LD B,E
 	instr[0x44] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.H) } // LD B,H
 	instr[0x45] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.L) } // LD B,L
-	instr[0x46] = nop                                                                    // LD B,(HL)
+	instr[0x46] = func(cpu *CPU) { cpu.Registers.B = MemRead(cpu.Registers.HL()) }       // LD B,(HL)
 	instr[0x47] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.A) } // LD B,A
 	instr[0x48] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.B) } // LD C,B
 	instr[0x49] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.C) } // LD C,C
@@ -93,7 +109,7 @@ func initInstr() []func(*CPU) {
 	instr[0x4b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.E) } // LD C,E
 	instr[0x4c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.H) } // LD C,H
 	instr[0x4d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.L) } // LD C,L
-	instr[0x4e] = nop                                                                    // LD C,(HL)
+	instr[0x4e] = func(cpu *CPU) { cpu.Registers.C = MemRead(cpu.Registers.HL()) }       // LD C,(HL)
 	instr[0x4f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.C, &cpu.Registers.A) } // LD C,A
 
 	instr[0x50] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.B) } // LD D,B
@@ -102,7 +118,7 @@ func initInstr() []func(*CPU) {
 	instr[0x53] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.E) } // LD D,E
 	instr[0x54] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.H) } // LD D,H
 	instr[0x55] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.L) } // LD D,L
-	instr[0x56] = nop                                                                    // LD D,(HL)
+	instr[0x56] = func(cpu *CPU) { cpu.Registers.D = MemRead(cpu.Registers.HL()) }       // LD D,(HL)
 	instr[0x57] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.D, &cpu.Registers.A) } // LD D,A
 	instr[0x58] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.B) } // LD E,B
 	instr[0x59] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.C) } // LD E,C
@@ -110,7 +126,7 @@ func initInstr() []func(*CPU) {
 	instr[0x5b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.E) } // LD E,E
 	instr[0x5c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.H) } // LD E,H
 	instr[0x5d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.L) } // LD E,L
-	instr[0x5e] = nop                                                                    // LD E,(HL)
+	instr[0x5e] = func(cpu *CPU) { cpu.Registers.E = MemRead(cpu.Registers.HL()) }       // LD E,(HL)
 	instr[0x5f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.E, &cpu.Registers.A) } // LD E,A
 
 	instr[0x60] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.B) } // LD H,B
@@ -119,7 +135,7 @@ func initInstr() []func(*CPU) {
 	instr[0x63] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.E) } // LD H,E
 	instr[0x64] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.H) } // LD H,H
 	instr[0x65] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.L) } // LD H,L
-	instr[0x66] = nop                                                                    // LD H,(HL)
+	instr[0x66] = func(cpu *CPU) { cpu.Registers.H = MemRead(cpu.Registers.HL()) }       // LD H,(HL)
 	instr[0x67] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.H, &cpu.Registers.A) } // LD H,A
 	instr[0x68] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.B) } // LD L,B
 	instr[0x69] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.C) } // LD L,C
@@ -127,24 +143,24 @@ func initInstr() []func(*CPU) {
 	instr[0x6b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.E) } // LD L,E
 	instr[0x6c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.H) } // LD L,H
 	instr[0x6d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.L) } // LD L,L
-	instr[0x6e] = nop                                                                    // LD L,(HL)
+	instr[0x6e] = func(cpu *CPU) { cpu.Registers.L = MemRead(cpu.Registers.HL()) }       // LD L,(HL)
 	instr[0x6f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.L, &cpu.Registers.A) } // LD L,A
 
-	instr[0x70] = nop
-	instr[0x71] = nop
-	instr[0x72] = nop
-	instr[0x73] = nop
-	instr[0x74] = nop
-	instr[0x75] = nop
+	instr[0x70] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.B) } // LD (HL),B
+	instr[0x71] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.C) } // LD (HL),C
+	instr[0x72] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.D) } // LD (HL),D
+	instr[0x73] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.E) } // LD (HL),E
+	instr[0x74] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.H) } // LD (HL),H
+	instr[0x75] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.L) } // LD (HL),L
 	instr[0x76] = nop
-	instr[0x77] = nop
+	instr[0x77] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Registers.A) }       // LD (HL),A
 	instr[0x78] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.B) } // LD A,B
 	instr[0x79] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.C) } // LD A,C
 	instr[0x7a] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.D) } // LD A,D
 	instr[0x7b] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.E) } // LD A,E
 	instr[0x7c] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.H) } // LD A,H
 	instr[0x7d] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.L) } // LD A,L
-	instr[0x7e] = nop                                                                    // LD A,(HL)
+	instr[0x7e] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.HL()) }       // LD A,(HL)
 	instr[0x7f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.A) } // LD A,A
 
 	instr[0x80] = nop
@@ -249,9 +265,9 @@ func initInstr() []func(*CPU) {
 	instr[0xde] = nop
 	instr[0xdf] = nop
 
-	instr[0xe0] = nop
+	instr[0xe0] = func(cpu *CPU) { MemWrite(0xff00+uint16(cpu.Fetch()), cpu.Registers.A) } // LDH (n),A
 	instr[0xe1] = popHL
-	instr[0xe2] = nop
+	instr[0xe2] = func(cpu *CPU) { MemWrite(0xff00+uint16(cpu.Registers.C), cpu.Registers.A) } // LD (C),A
 	instr[0xe3] = nop
 	instr[0xe4] = nop
 	instr[0xe5] = pushHL
@@ -259,24 +275,24 @@ func initInstr() []func(*CPU) {
 	instr[0xe7] = nop
 	instr[0xe8] = nop
 	instr[0xe9] = nop
-	instr[0xea] = nop
+	instr[0xea] = func(cpu *CPU) { MemWrite(cpu.Fetch16(), cpu.Registers.A) } // LD (nn),A
 	instr[0xeb] = nop
 	instr[0xec] = nop
 	instr[0xed] = nop
 	instr[0xee] = nop
 	instr[0xef] = nop
 
-	instr[0xf0] = nop
+	instr[0xf0] = func(cpu *CPU) { cpu.Registers.A = MemRead(0xff00 + uint16(cpu.Fetch())) } // LDH A,(n)
 	instr[0xf1] = popAF
-	instr[0xf2] = nop
+	instr[0xf2] = func(cpu *CPU) { cpu.Registers.A = MemRead(0xff00 + uint16(cpu.Registers.C)) } // LD A,(C)
 	instr[0xf3] = nop
 	instr[0xf4] = nop
 	instr[0xf5] = pushAF
 	instr[0xf6] = nop
 	instr[0xf7] = nop
-	instr[0xf8] = loadSPPlusNToHL // LD HL,SP+n
-	instr[0xf9] = loadHLToSP      // LD SP,HL
-	instr[0xfa] = nop
+	instr[0xf8] = loadSPPlusNToHL                                             // LD HL,SP+n
+	instr[0xf9] = loadHLToSP                                                  // LD SP,HL
+	instr[0xfa] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Fetch16()) } // LD A,(nn)
 	instr[0xfb] = nop
 	instr[0xfc] = nop
 	instr[0xfd] = nop
@@ -364,10 +380,7 @@ func loadNNToDE(cpu *CPU) { loadNIntoNN(cpu, cpu.Registers.SetDE) } // LD DE,nn
 func loadNNToHL(cpu *CPU) { loadNIntoNN(cpu, cpu.Registers.SetHL) } // LD HL,nn
 func loadNNToSP(cpu *CPU) {
 	// LD SP,nn
-	i := uint16(cpu.Fetch())
-	j := uint16(cpu.Fetch())
-	var n uint16 = i<<8 | j
-	cpu.SP = n
+	cpu.SP = cpu.Fetch16()
 }
 
 func loadHLToSP(cpu *CPU) {
@@ -405,8 +418,5 @@ func popNN(cpu *CPU, address uint16) {
 
 // LD n,nn -- Put value nn into n.
 func loadNIntoNN(cpu *CPU, setNN func(uint16)) {
-	i := uint16(cpu.Fetch())
-	j := uint16(cpu.Fetch())
-	var n uint16 = i<<8 | j
-	setNN(n)
+	setNN(cpu.Fetch16())
 }

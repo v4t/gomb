@@ -13,7 +13,7 @@ type Clock struct {
 	cpu     int
 }
 
-// CPU contains CPU state
+// CPU represents CPU state
 type CPU struct {
 	Registers Registers
 	Clock     Clock
@@ -27,9 +27,26 @@ func (cpu *CPU) Execute() {
 	fmt.Println(op)
 }
 
-// Fetch next byte from memory
+// Fetch retrieve next byte from memory
 func (cpu *CPU) Fetch() byte {
 	op := memory[cpu.PC]
 	cpu.PC++
 	return op
+}
+
+// Fetch16 retrieve next 16-bit word from memory
+func (cpu *CPU) Fetch16() uint16 {
+	i := uint16(cpu.Fetch())
+	j := uint16(cpu.Fetch())
+	return j<<8 | i
+}
+
+// MemRead read byte from memory
+func MemRead(address uint16) byte {
+	return memory[address]
+}
+
+// MemWrite write byte to memory
+func MemWrite(address uint16, value byte) {
+	memory[address] = value
 }
