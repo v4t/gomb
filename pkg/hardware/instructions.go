@@ -163,14 +163,14 @@ func initInstr() []func(*CPU) {
 	instr[0x7e] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.HL()) }       // LD A,(HL)
 	instr[0x7f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.A) } // LD A,A
 
-	instr[0x80] = nop
-	instr[0x81] = nop
-	instr[0x82] = nop
-	instr[0x83] = nop
-	instr[0x84] = nop
-	instr[0x85] = nop
-	instr[0x86] = nop
-	instr[0x87] = nop
+	instr[0x80] = func(cpu *CPU) { addToA(cpu, cpu.Registers.B) }             // ADD A,B
+	instr[0x81] = func(cpu *CPU) { addToA(cpu, cpu.Registers.C) }             // ADD A,C
+	instr[0x82] = func(cpu *CPU) { addToA(cpu, cpu.Registers.D) }             // ADD A,D
+	instr[0x83] = func(cpu *CPU) { addToA(cpu, cpu.Registers.E) }             // ADD A,E
+	instr[0x84] = func(cpu *CPU) { addToA(cpu, cpu.Registers.H) }             // ADD A,H
+	instr[0x85] = func(cpu *CPU) { addToA(cpu, cpu.Registers.L) }             // ADD A,L
+	instr[0x86] = func(cpu *CPU) { addToA(cpu, MemRead(cpu.Registers.HL())) } // ADD A,(HL)
+	instr[0x87] = func(cpu *CPU) { addToA(cpu, cpu.Registers.A) }             // ADD A,A
 	instr[0x88] = nop
 	instr[0x89] = nop
 	instr[0x8a] = nop
@@ -237,7 +237,7 @@ func initInstr() []func(*CPU) {
 	instr[0xc3] = nop
 	instr[0xc4] = nop
 	instr[0xc5] = pushBC
-	instr[0xc6] = nop
+	instr[0xc6] = func(cpu *CPU) { addToA(cpu, cpu.Fetch()) } // ADD A,#
 	instr[0xc7] = nop
 	instr[0xc8] = nop
 	instr[0xc9] = nop
@@ -356,6 +356,18 @@ func decN(cpu *CPU, n *byte) {
 // DEC nn -- Decrement register nn
 func decNN(cpu *CPU, getNN func() uint16, setNN func(uint16)) {
 	setNN(getNN() - 1)
+}
+
+// Add n to A
+func addToA(cpu *CPU, n byte) {
+	sum := int16(cpu.Registers.A) + int16(n)
+	halfCarry := (((cpu.Registers.A & 0xf) + (n & 0xf)) & 0x10) == 0x10
+	cpu.Registers.A = byte(sum)
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(halfCarry)
+	cpu.SetCarry(sum > 255)
 }
 
 /* 8-bit loads */
