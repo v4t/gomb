@@ -163,73 +163,73 @@ func initInstr() []func(*CPU) {
 	instr[0x7e] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.HL()) }       // LD A,(HL)
 	instr[0x7f] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.A, &cpu.Registers.A) } // LD A,A
 
-	instr[0x80] = func(cpu *CPU) { addToA(cpu, cpu.Registers.B) }             // ADD A,B
-	instr[0x81] = func(cpu *CPU) { addToA(cpu, cpu.Registers.C) }             // ADD A,C
-	instr[0x82] = func(cpu *CPU) { addToA(cpu, cpu.Registers.D) }             // ADD A,D
-	instr[0x83] = func(cpu *CPU) { addToA(cpu, cpu.Registers.E) }             // ADD A,E
-	instr[0x84] = func(cpu *CPU) { addToA(cpu, cpu.Registers.H) }             // ADD A,H
-	instr[0x85] = func(cpu *CPU) { addToA(cpu, cpu.Registers.L) }             // ADD A,L
-	instr[0x86] = func(cpu *CPU) { addToA(cpu, MemRead(cpu.Registers.HL())) } // ADD A,(HL)
-	instr[0x87] = func(cpu *CPU) { addToA(cpu, cpu.Registers.A) }             // ADD A,A
-	instr[0x88] = nop
-	instr[0x89] = nop
-	instr[0x8a] = nop
-	instr[0x8b] = nop
-	instr[0x8c] = nop
-	instr[0x8d] = nop
-	instr[0x8e] = nop
-	instr[0x8f] = nop
+	instr[0x80] = func(cpu *CPU) { addToA(cpu, cpu.Registers.B) }                      // ADD A,B
+	instr[0x81] = func(cpu *CPU) { addToA(cpu, cpu.Registers.C) }                      // ADD A,C
+	instr[0x82] = func(cpu *CPU) { addToA(cpu, cpu.Registers.D) }                      // ADD A,D
+	instr[0x83] = func(cpu *CPU) { addToA(cpu, cpu.Registers.E) }                      // ADD A,E
+	instr[0x84] = func(cpu *CPU) { addToA(cpu, cpu.Registers.H) }                      // ADD A,H
+	instr[0x85] = func(cpu *CPU) { addToA(cpu, cpu.Registers.L) }                      // ADD A,L
+	instr[0x86] = func(cpu *CPU) { addToA(cpu, MemRead(cpu.Registers.HL())) }          // ADD A,(HL)
+	instr[0x87] = func(cpu *CPU) { addToA(cpu, cpu.Registers.A) }                      // ADD A,A
+	instr[0x88] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.B) }             // ADC A,B
+	instr[0x89] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.C) }             // ADC A,C
+	instr[0x8a] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.D) }             // ADC A,D
+	instr[0x8b] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.E) }             // ADC A,E
+	instr[0x8c] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.H) }             // ADC A,H
+	instr[0x8d] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.L) }             // ADC A,L
+	instr[0x8e] = func(cpu *CPU) { addWithCarryToA(cpu, MemRead(cpu.Registers.HL())) } // ADC A,(HL)
+	instr[0x8f] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Registers.A) }             // ADC A,A
 
-	instr[0x90] = nop
-	instr[0x91] = nop
-	instr[0x92] = nop
-	instr[0x93] = nop
-	instr[0x94] = nop
-	instr[0x95] = nop
-	instr[0x96] = nop
-	instr[0x97] = nop
-	instr[0x98] = nop
-	instr[0x99] = nop
-	instr[0x9a] = nop
-	instr[0x9b] = nop
-	instr[0x9c] = nop
-	instr[0x9d] = nop
-	instr[0x9e] = nop
-	instr[0x9f] = nop
+	instr[0x90] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.B) }                      // SUB A,B
+	instr[0x91] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.C) }                      // SUB A,C
+	instr[0x92] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.D) }                      // SUB A,D
+	instr[0x93] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.E) }                      // SUB A,E
+	instr[0x94] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.H) }                      // SUB A,H
+	instr[0x95] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.L) }                      // SUB A,L
+	instr[0x96] = func(cpu *CPU) { subFromA(cpu, MemRead(cpu.Registers.HL())) }          // SUB A,(HL)
+	instr[0x97] = func(cpu *CPU) { subFromA(cpu, cpu.Registers.A) }                      // SUB A,A
+	instr[0x98] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.B) }             // SBC A,B
+	instr[0x99] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.C) }             // SBC A,C
+	instr[0x9a] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.D) }             // SBC A,D
+	instr[0x9b] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.E) }             // SBC A,E
+	instr[0x9c] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.H) }             // SBC A,H
+	instr[0x9d] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.L) }             // SBC A,L
+	instr[0x9e] = func(cpu *CPU) { subWithCarryFromA(cpu, MemRead(cpu.Registers.HL())) } // SBC A,(HL)
+	instr[0x9f] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Registers.D) }             // SBC A,A
 
-	instr[0xa0] = nop
-	instr[0xa1] = nop
-	instr[0xa2] = nop
-	instr[0xa3] = nop
-	instr[0xa4] = nop
-	instr[0xa5] = nop
-	instr[0xa6] = nop
-	instr[0xa7] = nop
-	instr[0xa8] = nop
-	instr[0xa9] = nop
-	instr[0xaa] = nop
-	instr[0xab] = nop
-	instr[0xac] = nop
-	instr[0xad] = nop
-	instr[0xae] = nop
-	instr[0xaf] = nop
+	instr[0xa0] = func(cpu *CPU) { andA(cpu, cpu.Registers.B) }             // AND B
+	instr[0xa1] = func(cpu *CPU) { andA(cpu, cpu.Registers.C) }             // AND C
+	instr[0xa2] = func(cpu *CPU) { andA(cpu, cpu.Registers.D) }             // AND D
+	instr[0xa3] = func(cpu *CPU) { andA(cpu, cpu.Registers.E) }             // AND E
+	instr[0xa4] = func(cpu *CPU) { andA(cpu, cpu.Registers.H) }             // AND H
+	instr[0xa5] = func(cpu *CPU) { andA(cpu, cpu.Registers.L) }             // AND L
+	instr[0xa6] = func(cpu *CPU) { andA(cpu, MemRead(cpu.Registers.HL())) } // AND (HL)
+	instr[0xa7] = func(cpu *CPU) { andA(cpu, cpu.Registers.A) }             // AND A
+	instr[0xa8] = func(cpu *CPU) { xorA(cpu, cpu.Registers.B) }             // XOR B
+	instr[0xa9] = func(cpu *CPU) { xorA(cpu, cpu.Registers.C) }             // XOR C
+	instr[0xaa] = func(cpu *CPU) { xorA(cpu, cpu.Registers.D) }             // XOR D
+	instr[0xab] = func(cpu *CPU) { xorA(cpu, cpu.Registers.E) }             // XOR E
+	instr[0xac] = func(cpu *CPU) { xorA(cpu, cpu.Registers.H) }             // XOR H
+	instr[0xad] = func(cpu *CPU) { xorA(cpu, cpu.Registers.L) }             // XOR L
+	instr[0xae] = func(cpu *CPU) { xorA(cpu, MemRead(cpu.Registers.HL())) } // XOR (HL)
+	instr[0xaf] = func(cpu *CPU) { xorA(cpu, cpu.Registers.A) }             // XOR A
 
-	instr[0xb0] = nop
-	instr[0xb1] = nop
-	instr[0xb2] = nop
-	instr[0xb3] = nop
-	instr[0xb4] = nop
-	instr[0xb5] = nop
-	instr[0xb6] = nop
-	instr[0xb7] = nop
-	instr[0xb8] = nop
-	instr[0xb9] = nop
-	instr[0xba] = nop
-	instr[0xbb] = nop
-	instr[0xbc] = nop
-	instr[0xbd] = nop
-	instr[0xbe] = nop
-	instr[0xbf] = nop
+	instr[0xb0] = func(cpu *CPU) { orA(cpu, cpu.Registers.B) }             // OR B
+	instr[0xb1] = func(cpu *CPU) { orA(cpu, cpu.Registers.C) }             // OR C
+	instr[0xb2] = func(cpu *CPU) { orA(cpu, cpu.Registers.D) }             // OR D
+	instr[0xb3] = func(cpu *CPU) { orA(cpu, cpu.Registers.E) }             // OR E
+	instr[0xb4] = func(cpu *CPU) { orA(cpu, cpu.Registers.H) }             // OR H
+	instr[0xb5] = func(cpu *CPU) { orA(cpu, cpu.Registers.L) }             // OR L
+	instr[0xb6] = func(cpu *CPU) { orA(cpu, MemRead(cpu.Registers.HL())) } // OR (HL)
+	instr[0xb7] = func(cpu *CPU) { orA(cpu, cpu.Registers.A) }             // OR A
+	instr[0xb8] = func(cpu *CPU) { cpA(cpu, cpu.Registers.B) }             // CP B
+	instr[0xb9] = func(cpu *CPU) { cpA(cpu, cpu.Registers.C) }             // CP C
+	instr[0xba] = func(cpu *CPU) { cpA(cpu, cpu.Registers.D) }             // CP D
+	instr[0xbb] = func(cpu *CPU) { cpA(cpu, cpu.Registers.E) }             // CP E
+	instr[0xbc] = func(cpu *CPU) { cpA(cpu, cpu.Registers.H) }             // CP H
+	instr[0xbd] = func(cpu *CPU) { cpA(cpu, cpu.Registers.L) }             // CP L
+	instr[0xbe] = func(cpu *CPU) { cpA(cpu, MemRead(cpu.Registers.HL())) } // CP (HL)
+	instr[0xbf] = func(cpu *CPU) { cpA(cpu, cpu.Registers.A) }             // CP A
 
 	instr[0xc0] = nop
 	instr[0xc1] = popBC
@@ -245,7 +245,7 @@ func initInstr() []func(*CPU) {
 	instr[0xcb] = nop
 	instr[0xcc] = nop
 	instr[0xcd] = nop
-	instr[0xce] = nop
+	instr[0xce] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Fetch()) } // ADC A,#
 	instr[0xcf] = nop
 
 	instr[0xd0] = nop
@@ -254,7 +254,7 @@ func initInstr() []func(*CPU) {
 	instr[0xd3] = nop
 	instr[0xd4] = nop
 	instr[0xd5] = pushDE
-	instr[0xd6] = nop
+	instr[0xd6] = func(cpu *CPU) { subFromA(cpu, cpu.Fetch()) } // SUB A,#
 	instr[0xd7] = nop
 	instr[0xd8] = nop
 	instr[0xd9] = nop
@@ -262,7 +262,7 @@ func initInstr() []func(*CPU) {
 	instr[0xdb] = nop
 	instr[0xdc] = nop
 	instr[0xdd] = nop
-	instr[0xde] = nop
+	instr[0xde] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Fetch()) } // SBC A,#
 	instr[0xdf] = nop
 
 	instr[0xe0] = func(cpu *CPU) { MemWrite(0xff00+uint16(cpu.Fetch()), cpu.Registers.A) } // LDH (n),A
@@ -271,7 +271,7 @@ func initInstr() []func(*CPU) {
 	instr[0xe3] = nop
 	instr[0xe4] = nop
 	instr[0xe5] = pushHL
-	instr[0xe6] = nop
+	instr[0xe6] = func(cpu *CPU) { andA(cpu, cpu.Fetch()) } // AND #
 	instr[0xe7] = nop
 	instr[0xe8] = nop
 	instr[0xe9] = nop
@@ -279,7 +279,7 @@ func initInstr() []func(*CPU) {
 	instr[0xeb] = nop
 	instr[0xec] = nop
 	instr[0xed] = nop
-	instr[0xee] = nop
+	instr[0xee] = func(cpu *CPU) { xorA(cpu, cpu.Fetch()) } // XOR #
 	instr[0xef] = nop
 
 	instr[0xf0] = func(cpu *CPU) { cpu.Registers.A = MemRead(0xff00 + uint16(cpu.Fetch())) } // LDH A,(n)
@@ -288,7 +288,7 @@ func initInstr() []func(*CPU) {
 	instr[0xf3] = nop
 	instr[0xf4] = nop
 	instr[0xf5] = pushAF
-	instr[0xf6] = nop
+	instr[0xf6] = func(cpu *CPU) { orA(cpu, cpu.Fetch()) } // OR #
 	instr[0xf7] = nop
 	instr[0xf8] = loadSPPlusNToHL                                             // LD HL,SP+n
 	instr[0xf9] = loadHLToSP                                                  // LD SP,HL
@@ -296,7 +296,7 @@ func initInstr() []func(*CPU) {
 	instr[0xfb] = nop
 	instr[0xfc] = nop
 	instr[0xfd] = nop
-	instr[0xfe] = nop
+	instr[0xfe] = func(cpu *CPU) { cpA(cpu, cpu.Fetch()) } // CP #
 	instr[0xff] = nop
 
 	return instr
@@ -367,7 +367,87 @@ func addToA(cpu *CPU, n byte) {
 	cpu.SetZero(cpu.Registers.A == 0)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(halfCarry)
-	cpu.SetCarry(sum > 255)
+	cpu.SetCarry(sum > 0xff)
+}
+
+// Add n + Carry flag to A
+func addWithCarryToA(cpu *CPU, n byte) {
+	var carry int16 = 0
+	if cpu.Carry() {
+		carry = 1
+	}
+	sum := int16(cpu.Registers.A) + int16(n) + carry
+	halfCarry := ((cpu.Registers.A & 0xf) + (n & 0xf) + byte(carry)) > 0xf
+	cpu.Registers.A = byte(sum)
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(halfCarry)
+	cpu.SetCarry(sum > 0xff)
+}
+
+// Sub n from A
+func subFromA(cpu *CPU, n byte) {
+	diff := int16(cpu.Registers.A) + int16(n)
+	halfCarry := ((cpu.Registers.A & 0xf) - (n & 0xf)) < 0
+	cpu.Registers.A = byte(diff)
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(true)
+	cpu.SetHalfCarry(halfCarry)
+	cpu.SetCarry(diff < 0)
+}
+
+// Sub n + Carry flag from A
+func subWithCarryFromA(cpu *CPU, n byte) {
+	diff := int16(cpu.Registers.A) + int16(n)
+	halfCarry := ((cpu.Registers.A & 0xf) - (n & 0xf)) < 0
+	cpu.Registers.A = byte(diff)
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(true)
+	cpu.SetHalfCarry(halfCarry)
+	cpu.SetCarry(diff < 0)
+}
+
+// Logically AND n with A, result in A
+func andA(cpu *CPU, n byte) {
+	cpu.Registers.A &= n
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(true)
+	cpu.SetCarry(false)
+}
+
+// Logical OR n with register A, result in A
+func orA(cpu *CPU, n byte) {
+	cpu.Registers.A |= n
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(false)
+}
+
+// Logical exclusive OR n with register A, result in A
+func xorA(cpu *CPU, n byte) {
+	cpu.Registers.A ^= n
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(false)
+}
+
+// Compare A with n. This is basically an A - n subtraction instruction but the results are thrown away.
+func cpA(cpu *CPU, n byte) {
+	result := cpu.Registers.A - n
+
+	cpu.SetZero(result == 0)
+	cpu.SetNegative(true)
+	cpu.SetHalfCarry((cpu.Registers.A & 0x0f) > (n & 0x0f))
+	cpu.SetCarry(cpu.Registers.A > n)
 }
 
 /* 8-bit loads */

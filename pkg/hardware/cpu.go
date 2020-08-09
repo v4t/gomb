@@ -65,12 +65,12 @@ func (cpu *CPU) SetCarry(value bool) {
 	}
 }
 
-// HalfCarry retrieves half carry flag
+// HalfCarry retrieves half-carry flag
 func (cpu *CPU) HalfCarry() bool {
 	return cpu.Registers.F&bitflagH != 0
 }
 
-// SetHalfCarry sets half carry flag
+// SetHalfCarry sets half-carry flag
 func (cpu *CPU) SetHalfCarry(value bool) {
 	if value {
 		cpu.Registers.F |= bitflagH
