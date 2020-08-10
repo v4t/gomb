@@ -235,7 +235,7 @@ func initInstr() []func(*CPU) {
 	instr[0xc1] = popBC
 	instr[0xc2] = func(cpu *CPU) { conditionalJump(cpu, !cpu.Zero(), cpu.Fetch16()) } // JP NZ,nn
 	instr[0xc3] = func(cpu *CPU) { cpu.PC = cpu.Fetch16() }                           // JP nn
-	instr[0xc4] = nop
+	instr[0xc4] = func(cpu *CPU) { conditionalCall(cpu, !cpu.Zero(), cpu.Fetch16()) } // CALL NZ,nn
 	instr[0xc5] = pushBC
 	instr[0xc6] = func(cpu *CPU) { addToA(cpu, cpu.Fetch()) } // ADD A,#
 	instr[0xc7] = nop
@@ -243,16 +243,16 @@ func initInstr() []func(*CPU) {
 	instr[0xc9] = nop
 	instr[0xca] = func(cpu *CPU) { conditionalJump(cpu, cpu.Zero(), cpu.Fetch16()) } // JP Z,nn
 	instr[0xcb] = nop
-	instr[0xcc] = nop
-	instr[0xcd] = nop
-	instr[0xce] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Fetch()) } // ADC A,#
+	instr[0xcc] = func(cpu *CPU) { conditionalCall(cpu, cpu.Zero(), cpu.Fetch16()) } // CALL Z,nn
+	instr[0xcd] = func(cpu *CPU) { call(cpu, cpu.Fetch16()) }                        // CALL nn
+	instr[0xce] = func(cpu *CPU) { addWithCarryToA(cpu, cpu.Fetch()) }               // ADC A,#
 	instr[0xcf] = nop
 
 	instr[0xd0] = nop
 	instr[0xd1] = popDE
 	instr[0xd2] = func(cpu *CPU) { conditionalJump(cpu, !cpu.Carry(), cpu.Fetch16()) } // JP NC,nn
 	instr[0xd3] = nop
-	instr[0xd4] = nop
+	instr[0xd4] = func(cpu *CPU) { conditionalCall(cpu, !cpu.Carry(), cpu.Fetch16()) } // CALL NC,nn
 	instr[0xd5] = pushDE
 	instr[0xd6] = func(cpu *CPU) { subFromA(cpu, cpu.Fetch()) } // SUB A,#
 	instr[0xd7] = nop
@@ -260,7 +260,7 @@ func initInstr() []func(*CPU) {
 	instr[0xd9] = nop
 	instr[0xda] = func(cpu *CPU) { conditionalJump(cpu, cpu.Carry(), cpu.Fetch16()) } // JP C,nn
 	instr[0xdb] = nop
-	instr[0xdc] = nop
+	instr[0xdc] = func(cpu *CPU) { conditionalCall(cpu, cpu.Carry(), cpu.Fetch16()) } // CALL C,nn
 	instr[0xdd] = nop
 	instr[0xde] = func(cpu *CPU) { subWithCarryFromA(cpu, cpu.Fetch()) } // SBC A,#
 	instr[0xdf] = nop
@@ -661,5 +661,18 @@ func conditionalRelativeJump(cpu *CPU, condition bool, n byte) {
 	if condition {
 		address := int32(cpu.PC) + int32(n)
 		cpu.PC = uint16(address)
+	}
+}
+
+// CALL nn -- Push address of next instruction onto stack and then jump to address nn
+func call(cpu *CPU, next uint16) {
+	pushNN(cpu, cpu.PC)
+	cpu.PC = next
+}
+
+// CALL cc,nn -- Call address n if condition is true
+func conditionalCall(cpu *CPU, condition bool, next uint16) {
+	if condition {
+		call(cpu, next)
 	}
 }
