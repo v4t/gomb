@@ -18,8 +18,8 @@ func initInstr() []func(*CPU) {
 	instr[0x04] = incB                                                             // INC B
 	instr[0x05] = decB                                                             // DEC B
 	instr[0x06] = load8BitValToB                                                   // LD B,n
-	instr[0x07] = nop
-	instr[0x08] = loadSPToAddressNN // LD (nn),SP
+	instr[0x07] = func(cpu *CPU) { rlca(cpu) }                                     // RLCA
+	instr[0x08] = loadSPToAddressNN                                                // LD (nn),SP
 	instr[0x09] = nop
 	instr[0x0a] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.BC()) } // LD A,(BC)
 	instr[0x0b] = decBC                                                            // DEC BC
@@ -35,7 +35,7 @@ func initInstr() []func(*CPU) {
 	instr[0x14] = incD                                                             // INC D
 	instr[0x15] = decD                                                             // DEC D
 	instr[0x16] = load8BitValToD                                                   // LD D,n
-	instr[0x17] = nop
+	instr[0x17] = func(cpu *CPU) { rla(cpu) }                                      // RLA
 	instr[0x18] = nop
 	instr[0x19] = nop
 	instr[0x1a] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Registers.DE()) } // LD A,(DE)
@@ -68,7 +68,7 @@ func initInstr() []func(*CPU) {
 	instr[0x2c] = incL           // INC L
 	instr[0x2d] = decL           // DEC L
 	instr[0x2e] = load8BitValToL // LD L,n
-	instr[0x2f] = nop
+	instr[0x2f] = complementA    // CPL
 
 	instr[0x30] = nop
 	instr[0x31] = loadNNToSP // LD SP,nn
@@ -81,7 +81,7 @@ func initInstr() []func(*CPU) {
 	instr[0x34] = nop
 	instr[0x35] = nop
 	instr[0x36] = func(cpu *CPU) { MemWrite(cpu.Registers.HL(), cpu.Fetch()) } // LD (HL),n
-	instr[0x37] = nop
+	instr[0x37] = setCarryFlag
 	instr[0x38] = nop
 	instr[0x39] = nop
 	instr[0x3a] = func(cpu *CPU) {
@@ -93,7 +93,7 @@ func initInstr() []func(*CPU) {
 	instr[0x3c] = incA                                             // INC A
 	instr[0x3d] = decA                                             // DEC A
 	instr[0x3e] = func(cpu *CPU) { cpu.Registers.A = cpu.Fetch() } // LD A,#
-	instr[0x3f] = nop
+	instr[0x3f] = complementCarry                                  // CCF
 
 	instr[0x40] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.B) } // LD B,B
 	instr[0x41] = func(cpu *CPU) { loadR2ToR1(cpu, &cpu.Registers.B, &cpu.Registers.C) } // LD B,C
@@ -273,7 +273,7 @@ func initInstr() []func(*CPU) {
 	instr[0xe5] = pushHL
 	instr[0xe6] = func(cpu *CPU) { andA(cpu, cpu.Fetch()) } // AND #
 	instr[0xe7] = nop
-	instr[0xe8] = nop
+	instr[0xe8] = func(cpu *CPU) { addSignedNToSp(cpu, int8(cpu.Fetch())) } // ADD SP,n
 	instr[0xe9] = nop
 	instr[0xea] = func(cpu *CPU) { MemWrite(cpu.Fetch16(), cpu.Registers.A) } // LD (nn),A
 	instr[0xeb] = nop
@@ -290,7 +290,7 @@ func initInstr() []func(*CPU) {
 	instr[0xf5] = pushAF
 	instr[0xf6] = func(cpu *CPU) { orA(cpu, cpu.Fetch()) } // OR #
 	instr[0xf7] = nop
-	instr[0xf8] = loadSPPlusNToHL                                             // LD HL,SP+n
+	instr[0xf8] = func(cpu *CPU) { loadSPPlusNToHL(cpu, int8(cpu.Fetch())) }  // LD HL,SP+n
 	instr[0xf9] = loadHLToSP                                                  // LD SP,HL
 	instr[0xfa] = func(cpu *CPU) { cpu.Registers.A = MemRead(cpu.Fetch16()) } // LD A,(nn)
 	instr[0xfb] = nop
@@ -450,6 +450,23 @@ func cpA(cpu *CPU, n byte) {
 	cpu.SetCarry(cpu.Registers.A > n)
 }
 
+/* 16-bit arithmetic */
+
+// ADD SP,n -- Add signed byte n to Stack Pointer (SP)
+func addSignedNToSp(cpu *CPU, n int8) {
+	sum := int32(cpu.SP) + int32(n)
+	if n >= 0 {
+		cpu.SetCarry(((sum & 0xff) + int32(n)) > 0xff)
+		cpu.SetHalfCarry(((sum & 0xf) + int32(n&0xf)) > 0xf)
+	} else {
+		cpu.SetCarry((sum & 0xff) <= int32(cpu.SP&0xff))
+		cpu.SetHalfCarry((sum & 0xf) <= int32(cpu.SP&0xf))
+	}
+	cpu.SetZero(false)
+	cpu.SetNegative(false)
+	cpu.SP = uint16(sum)
+}
+
 /* 8-bit loads */
 func load8BitValToB(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.B) } // LD B,n
 func load8BitValToC(cpu *CPU) { load8BitValueIntoN(cpu, &cpu.Registers.C) } // LD C,n
@@ -475,19 +492,31 @@ func loadNNToSP(cpu *CPU) {
 	cpu.SP = cpu.Fetch16()
 }
 
+// LD SP,HL
 func loadHLToSP(cpu *CPU) {
-	// LD SP,HL
 	cpu.SP = cpu.Registers.HL()
 }
 
-func loadSPPlusNToHL(cpu *CPU) {
-	// LD HL,SP+n
-	log.Fatalln("Not implemented: LD HL,SP+n")
+// LD HL,SP+n
+func loadSPPlusNToHL(cpu *CPU, n int8) {
+	sum := int32(cpu.SP) + int32(n)
+	if n >= 0 {
+		cpu.SetCarry(((sum & 0xff) + int32(n)) > 0xff)
+		cpu.SetHalfCarry(((sum & 0xf) + int32(n&0xf)) > 0xf)
+	} else {
+		cpu.SetCarry((sum & 0xff) <= int32(cpu.SP&0xff))
+		cpu.SetHalfCarry((sum & 0xf) <= int32(cpu.SP&0xf))
+	}
+	cpu.SetZero(false)
+	cpu.SetNegative(false)
+	cpu.Registers.SetHL(uint16(sum))
 }
 
+// LD (nn),SP -- Put Stack Pointer (SP) at address n.
 func loadSPToAddressNN(cpu *CPU) {
-	// LD (nn),SP
-	log.Fatalln("Not implemented: LD (nn),SP")
+	address := cpu.Fetch16()
+	MemWrite(address, byte(cpu.SP&0xff))
+	MemWrite(address+1, byte(cpu.SP>>8))
 }
 
 func pushAF(cpu *CPU) { pushNN(cpu, cpu.Registers.AF()) } // PUSH AF
@@ -495,20 +524,93 @@ func pushBC(cpu *CPU) { pushNN(cpu, cpu.Registers.BC()) } // PUSH BC
 func pushDE(cpu *CPU) { pushNN(cpu, cpu.Registers.DE()) } // PUSH DE
 func pushHL(cpu *CPU) { pushNN(cpu, cpu.Registers.HL()) } // PUSH HL
 
-func popAF(cpu *CPU) { popNN(cpu, cpu.Registers.AF()) } // POP AF
-func popBC(cpu *CPU) { popNN(cpu, cpu.Registers.BC()) } // POP BC
-func popDE(cpu *CPU) { popNN(cpu, cpu.Registers.DE()) } // POP DE
-func popHL(cpu *CPU) { popNN(cpu, cpu.Registers.HL()) } // POP HL
+func popAF(cpu *CPU) { cpu.Registers.SetBC(popNN(cpu)) } // POP AF
+func popBC(cpu *CPU) { cpu.Registers.SetBC(popNN(cpu)) } // POP BC
+func popDE(cpu *CPU) { cpu.Registers.SetDE(popNN(cpu)) } // POP DE
+func popHL(cpu *CPU) { cpu.Registers.SetHL(popNN(cpu)) } // POP HL
 
 func pushNN(cpu *CPU, address uint16) {
-	log.Fatalln("Not implemented: PUSH nn")
+	MemWrite(cpu.SP-1, byte(uint16(address&0xff00)>>8))
+	MemWrite(cpu.SP-2, byte(address&0xff))
+	cpu.SP -= 2
 }
 
-func popNN(cpu *CPU, address uint16) {
-	log.Fatalln("Not implemented: POP nn")
+func popNN(cpu *CPU) uint16 {
+	byte1 := uint16(MemRead(cpu.SP))
+	byte2 := uint16(MemRead(cpu.SP+1)) << 8
+	cpu.SP += 2
+	return byte1 | byte2
 }
 
 // LD n,nn -- Put value nn into n.
 func loadNIntoNN(cpu *CPU, setNN func(uint16)) {
 	setNN(cpu.Fetch16())
+}
+
+/* Rotates & shifts */
+
+// RLCA -- Rotate A left. Old bit 7 to Carry flag.
+func rlca(cpu *CPU) {
+	leavingBit := cpu.Registers.A >> 7
+	cpu.Registers.A = cpu.Registers.A<<1 | leavingBit
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(leavingBit == 1)
+}
+
+// RLA -- Rotate A left through Carry flag
+func rla(cpu *CPU) {
+	leavingBit := cpu.Registers.A >> 7
+	var carry byte = 0
+	if cpu.Carry() {
+		carry = 1
+	}
+	cpu.Registers.A = cpu.Registers.A<<1 | carry
+
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(leavingBit == 1)
+}
+
+/* Misc. */
+
+// DAA -- Decimal adjust register A
+func decimalAdjustA(cpu *CPU) {
+	log.Fatalln("TODO")
+	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetHalfCarry(false)
+}
+
+// CPL -- Complement A register
+func complementA(cpu *CPU) {
+	cpu.Registers.A = 0xff ^ cpu.Registers.A
+	cpu.SetNegative(true)
+	cpu.SetHalfCarry(true)
+}
+
+// CCF -- Complement carry flag
+func complementCarry(cpu *CPU) {
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(!cpu.Carry())
+}
+
+// SCF -- Set carry flag
+func setCarryFlag(cpu *CPU) {
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(true)
+}
+
+// HALT -- Power down CPU until an interrupt occurs
+func halt(cpu *CPU) {
+	log.Fatalln("TODO: HALT")
+}
+
+// STOP -- Halt CPU & LCD display until button pressed
+func stop(cpu *CPU) {
+	log.Fatalln("TODO: STOP")
 }
