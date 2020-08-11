@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"fmt"
+	"log"
 	"math"
 )
 
@@ -115,4 +116,14 @@ func MemRead(address uint16) byte {
 // MemWrite write byte to memory
 func MemWrite(address uint16, value byte) {
 	memory[address] = value
+}
+
+// EnableInterrupts enables cpu interrupts
+func EnableInterrupts() {
+	log.Println("Enable interrupts")
+}
+
+// DisableInterrupts disables cpu interrupts
+func DisableInterrupts() {
+	log.Println("Enable interrupts")
 }
