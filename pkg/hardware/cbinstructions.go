@@ -38,22 +38,22 @@ func CBInstructions(cpu *CPU) []func() {
 	instr[0x1e] = func() { MemWrite(cpu.Registers.HL(), rotateRight(cpu, MemRead(cpu.Registers.HL()), false)) } // RR (HL)
 	instr[0x1f] = func() { cpu.Registers.A = rotateRight(cpu, cpu.Registers.A, false) }                         // RR A
 
-	instr[0x20] = nop
-	instr[0x21] = nop
-	instr[0x22] = nop
-	instr[0x23] = nop
-	instr[0x24] = nop
-	instr[0x25] = nop
-	instr[0x26] = nop
-	instr[0x27] = nop
-	instr[0x28] = nop
-	instr[0x29] = nop
-	instr[0x2a] = nop
-	instr[0x2b] = nop
-	instr[0x2c] = nop
-	instr[0x2d] = nop
-	instr[0x2e] = nop
-	instr[0x2f] = nop
+	instr[0x20] = func() { cpu.Registers.B = sla(cpu, cpu.Registers.B) }                         // SLA B
+	instr[0x21] = func() { cpu.Registers.C = sla(cpu, cpu.Registers.C) }                         // SLA C
+	instr[0x22] = func() { cpu.Registers.D = sla(cpu, cpu.Registers.D) }                         // SLA D
+	instr[0x23] = func() { cpu.Registers.E = sla(cpu, cpu.Registers.E) }                         // SLA E
+	instr[0x24] = func() { cpu.Registers.H = sla(cpu, cpu.Registers.H) }                         // SLA H
+	instr[0x25] = func() { cpu.Registers.L = sla(cpu, cpu.Registers.L) }                         // SLA L
+	instr[0x26] = func() { MemWrite(cpu.Registers.HL(), sla(cpu, MemRead(cpu.Registers.HL()))) } // SLA (HL)
+	instr[0x27] = func() { cpu.Registers.A = sla(cpu, cpu.Registers.A) }                         // SLA A
+	instr[0x28] = func() { cpu.Registers.B = sra(cpu, cpu.Registers.B) }                         // SRA B
+	instr[0x29] = func() { cpu.Registers.C = sra(cpu, cpu.Registers.C) }                         // SRA C
+	instr[0x2a] = func() { cpu.Registers.D = sra(cpu, cpu.Registers.D) }                         // SRA D
+	instr[0x2b] = func() { cpu.Registers.E = sra(cpu, cpu.Registers.E) }                         // SRA E
+	instr[0x2c] = func() { cpu.Registers.H = sra(cpu, cpu.Registers.H) }                         // SRA H
+	instr[0x2d] = func() { cpu.Registers.L = sra(cpu, cpu.Registers.L) }                         // SRA L
+	instr[0x2e] = func() { MemWrite(cpu.Registers.HL(), sra(cpu, MemRead(cpu.Registers.HL()))) } // SRA (HL)
+	instr[0x2f] = func() { cpu.Registers.A = sra(cpu, cpu.Registers.A) }                         // SRA A
 
 	instr[0x30] = nop
 	instr[0x31] = nop
@@ -63,14 +63,14 @@ func CBInstructions(cpu *CPU) []func() {
 	instr[0x35] = nop
 	instr[0x36] = nop
 	instr[0x37] = nop
-	instr[0x38] = nop
-	instr[0x39] = nop
-	instr[0x3a] = nop
-	instr[0x3b] = nop
-	instr[0x3c] = nop
-	instr[0x3d] = nop
-	instr[0x3e] = nop
-	instr[0x3f] = nop
+	instr[0x38] = func() { cpu.Registers.B = srl(cpu, cpu.Registers.B) }                         // SRL B
+	instr[0x39] = func() { cpu.Registers.C = srl(cpu, cpu.Registers.C) }                         // SRL C
+	instr[0x3a] = func() { cpu.Registers.D = srl(cpu, cpu.Registers.D) }                         // SRL D
+	instr[0x3b] = func() { cpu.Registers.E = srl(cpu, cpu.Registers.E) }                         // SRL E
+	instr[0x3c] = func() { cpu.Registers.H = srl(cpu, cpu.Registers.H) }                         // SRL H
+	instr[0x3d] = func() { cpu.Registers.L = srl(cpu, cpu.Registers.L) }                         // SRL L
+	instr[0x3e] = func() { MemWrite(cpu.Registers.HL(), srl(cpu, MemRead(cpu.Registers.HL()))) } // SRL (HL)
+	instr[0x3f] = func() { cpu.Registers.A = srl(cpu, cpu.Registers.A) }                         // SRL A
 
 	instr[0x40] = nop
 	instr[0x41] = nop
@@ -354,4 +354,37 @@ func rr(cpu *CPU, n byte) {
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
+}
+
+// SLA n -- Shift n left into Carry. LSB of n set to 0.
+func sla(cpu *CPU, n byte) byte {
+	leavingBit := n >> 7
+	n <<= 1
+	cpu.SetZero(n == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(leavingBit == 1)
+	return n
+}
+
+// SRA n -- Shift n right into Carry. MSB doesn't change.
+func sra(cpu *CPU, n byte) byte {
+	leavingBit := n & 1
+	n = (n & 0x80) | (n >> 1)
+	cpu.SetZero(n == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(leavingBit == 1)
+	return n
+}
+
+// SRL n -- Shift n right into Carry. MSB set to 0.
+func srl(cpu *CPU, n byte) byte {
+	leavingBit := n & 1
+	n = (n & 0x80) | (n >> 1)
+	cpu.SetZero(n == 0)
+	cpu.SetNegative(false)
+	cpu.SetHalfCarry(false)
+	cpu.SetCarry(leavingBit == 1)
+	return n
 }
