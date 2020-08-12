@@ -8,13 +8,13 @@ import (
 
 var memory = make([]byte, math.MaxUint16)
 
-// Clock represents cpu timer
+// Clock represents cpu timer.
 type Clock struct {
 	machine int
 	cpu     int
 }
 
-// Flag is a type for CPU flags
+// Flag is a type for CPU flags.
 type Flag byte
 
 const (
@@ -24,7 +24,7 @@ const (
 	bitflagZ = 0x80
 )
 
-// CPU represents CPU state
+// CPU represents CPU state.
 type CPU struct {
 	Registers Registers
 	Clock     Clock
@@ -32,32 +32,32 @@ type CPU struct {
 	SP        uint16
 }
 
-// Execute next CPU cycle
+// Execute next CPU cycle.
 func (cpu *CPU) Execute() {
 	op := cpu.Fetch()
 	fmt.Println(op)
 }
 
-// Fetch retrieve next byte from memory
+// Fetch retrieve next byte from memory.
 func (cpu *CPU) Fetch() byte {
 	op := memory[cpu.PC]
 	cpu.PC++
 	return op
 }
 
-// Fetch16 retrieve next 16-bit word from memory
+// Fetch16 retrieve next 16-bit word from memory.
 func (cpu *CPU) Fetch16() uint16 {
 	i := uint16(cpu.Fetch())
 	j := uint16(cpu.Fetch())
 	return j<<8 | i
 }
 
-// Carry retrieves carry flag
+// Carry retrieves carry flag.
 func (cpu *CPU) Carry() bool {
 	return cpu.Registers.F&bitflagC != 0
 }
 
-// SetCarry sets carry flag
+// SetCarry sets carry flag.
 func (cpu *CPU) SetCarry(value bool) {
 	if value {
 		cpu.Registers.F |= bitflagC
@@ -66,12 +66,12 @@ func (cpu *CPU) SetCarry(value bool) {
 	}
 }
 
-// HalfCarry retrieves half-carry flag
+// HalfCarry retrieves half-carry flag.
 func (cpu *CPU) HalfCarry() bool {
 	return cpu.Registers.F&bitflagH != 0
 }
 
-// SetHalfCarry sets half-carry flag
+// SetHalfCarry sets half-carry flag.
 func (cpu *CPU) SetHalfCarry(value bool) {
 	if value {
 		cpu.Registers.F |= bitflagH
@@ -80,12 +80,12 @@ func (cpu *CPU) SetHalfCarry(value bool) {
 	}
 }
 
-// Negative retrieves negative/subtract flag
+// Negative retrieves negative/subtract flag.
 func (cpu *CPU) Negative() bool {
 	return cpu.Registers.F&bitflagN != 0
 }
 
-// SetNegative sets negative/subtract flag
+// SetNegative sets negative/subtract flag.
 func (cpu *CPU) SetNegative(value bool) {
 	if value {
 		cpu.Registers.F |= bitflagN
@@ -94,12 +94,12 @@ func (cpu *CPU) SetNegative(value bool) {
 	}
 }
 
-// Zero retrieves zero flag
+// Zero retrieves zero flag.
 func (cpu *CPU) Zero() bool {
 	return cpu.Registers.F&bitflagZ != 0
 }
 
-// SetZero sets zero flag
+// SetZero sets zero flag.
 func (cpu *CPU) SetZero(value bool) {
 	if value {
 		cpu.Registers.F |= bitflagZ
@@ -108,22 +108,22 @@ func (cpu *CPU) SetZero(value bool) {
 	}
 }
 
-// MemRead read byte from memory
+// MemRead read byte from memory.
 func MemRead(address uint16) byte {
 	return memory[address]
 }
 
-// MemWrite write byte to memory
+// MemWrite write byte to memory.
 func MemWrite(address uint16, value byte) {
 	memory[address] = value
 }
 
-// EnableInterrupts enables cpu interrupts
+// EnableInterrupts enables cpu interrupts.
 func EnableInterrupts() {
 	log.Println("Enable interrupts")
 }
 
-// DisableInterrupts disables cpu interrupts
+// DisableInterrupts disables cpu interrupts.
 func DisableInterrupts() {
 	log.Println("Enable interrupts")
 }
