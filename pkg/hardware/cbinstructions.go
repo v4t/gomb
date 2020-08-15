@@ -4,39 +4,39 @@ package hardware
 func CBInstructions(cpu *CPU) []func() {
 	var instr = make([]func(), 0x100)
 
-	instr[0x00] = func() { cpu.Registers.B = rotateLeft(cpu, cpu.Registers.B, true) }                          // RLC B
-	instr[0x01] = func() { cpu.Registers.C = rotateLeft(cpu, cpu.Registers.C, true) }                          // RLC C
-	instr[0x02] = func() { cpu.Registers.D = rotateLeft(cpu, cpu.Registers.D, true) }                          // RLC D
-	instr[0x03] = func() { cpu.Registers.E = rotateLeft(cpu, cpu.Registers.E, true) }                          // RLC E
-	instr[0x04] = func() { cpu.Registers.H = rotateLeft(cpu, cpu.Registers.H, true) }                          // RLC H
-	instr[0x05] = func() { cpu.Registers.L = rotateLeft(cpu, cpu.Registers.L, true) }                          // RLC L
-	instr[0x06] = func() { MemWrite(cpu.Registers.HL(), rotateLeft(cpu, MemRead(cpu.Registers.HL()), true)) }  // RLC (HL)
-	instr[0x07] = func() { cpu.Registers.A = rotateLeft(cpu, cpu.Registers.A, true) }                          // RLC A
-	instr[0x08] = func() { cpu.Registers.B = rotateRight(cpu, cpu.Registers.B, true) }                         // RRC B
-	instr[0x09] = func() { cpu.Registers.C = rotateRight(cpu, cpu.Registers.C, true) }                         // RRC C
-	instr[0x0a] = func() { cpu.Registers.D = rotateRight(cpu, cpu.Registers.D, true) }                         // RRC D
-	instr[0x0b] = func() { cpu.Registers.E = rotateRight(cpu, cpu.Registers.E, true) }                         // RRC E
-	instr[0x0c] = func() { cpu.Registers.H = rotateRight(cpu, cpu.Registers.H, true) }                         // RRC H
-	instr[0x0d] = func() { cpu.Registers.L = rotateRight(cpu, cpu.Registers.L, true) }                         // RRC L
-	instr[0x0e] = func() { MemWrite(cpu.Registers.HL(), rotateRight(cpu, MemRead(cpu.Registers.HL()), true)) } // RRC (HL)
-	instr[0x0f] = func() { cpu.Registers.A = rotateRight(cpu, cpu.Registers.A, true) }                         // RRC A
+	instr[0x00] = func() { cpu.Registers.B = rlc(cpu, cpu.Registers.B) }                         // RLC B
+	instr[0x01] = func() { cpu.Registers.C = rlc(cpu, cpu.Registers.C) }                         // RLC C
+	instr[0x02] = func() { cpu.Registers.D = rlc(cpu, cpu.Registers.D) }                         // RLC D
+	instr[0x03] = func() { cpu.Registers.E = rlc(cpu, cpu.Registers.E) }                         // RLC E
+	instr[0x04] = func() { cpu.Registers.H = rlc(cpu, cpu.Registers.H) }                         // RLC H
+	instr[0x05] = func() { cpu.Registers.L = rlc(cpu, cpu.Registers.L) }                         // RLC L
+	instr[0x06] = func() { MemWrite(cpu.Registers.HL(), rlc(cpu, MemRead(cpu.Registers.HL()))) } // RLC (HL)
+	instr[0x07] = func() { cpu.Registers.A = rlc(cpu, cpu.Registers.A) }                         // RLC A
+	instr[0x08] = func() { cpu.Registers.B = rrc(cpu, cpu.Registers.B) }                         // RRC B
+	instr[0x09] = func() { cpu.Registers.C = rrc(cpu, cpu.Registers.C) }                         // RRC C
+	instr[0x0a] = func() { cpu.Registers.D = rrc(cpu, cpu.Registers.D) }                         // RRC D
+	instr[0x0b] = func() { cpu.Registers.E = rrc(cpu, cpu.Registers.E) }                         // RRC E
+	instr[0x0c] = func() { cpu.Registers.H = rrc(cpu, cpu.Registers.H) }                         // RRC H
+	instr[0x0d] = func() { cpu.Registers.L = rrc(cpu, cpu.Registers.L) }                         // RRC L
+	instr[0x0e] = func() { MemWrite(cpu.Registers.HL(), rrc(cpu, MemRead(cpu.Registers.HL()))) } // RRC (HL)
+	instr[0x0f] = func() { cpu.Registers.A = rrc(cpu, cpu.Registers.A) }                         // RRC A
 
-	instr[0x10] = func() { cpu.Registers.B = rotateLeft(cpu, cpu.Registers.B, false) }                          // RL B
-	instr[0x11] = func() { cpu.Registers.C = rotateLeft(cpu, cpu.Registers.C, false) }                          // RL C
-	instr[0x12] = func() { cpu.Registers.D = rotateLeft(cpu, cpu.Registers.D, false) }                          // RL D
-	instr[0x13] = func() { cpu.Registers.E = rotateLeft(cpu, cpu.Registers.E, false) }                          // RL E
-	instr[0x14] = func() { cpu.Registers.H = rotateLeft(cpu, cpu.Registers.H, false) }                          // RL H
-	instr[0x15] = func() { cpu.Registers.L = rotateLeft(cpu, cpu.Registers.L, false) }                          // RL L
-	instr[0x16] = func() { MemWrite(cpu.Registers.HL(), rotateLeft(cpu, MemRead(cpu.Registers.HL()), false)) }  // RL (HL)
-	instr[0x17] = func() { cpu.Registers.A = rotateLeft(cpu, cpu.Registers.A, false) }                          // RL A
-	instr[0x18] = func() { cpu.Registers.B = rotateRight(cpu, cpu.Registers.B, false) }                         // RR B
-	instr[0x19] = func() { cpu.Registers.C = rotateRight(cpu, cpu.Registers.C, false) }                         // RR C
-	instr[0x1a] = func() { cpu.Registers.D = rotateRight(cpu, cpu.Registers.D, false) }                         // RR D
-	instr[0x1b] = func() { cpu.Registers.E = rotateRight(cpu, cpu.Registers.E, false) }                         // RR E
-	instr[0x1c] = func() { cpu.Registers.H = rotateRight(cpu, cpu.Registers.H, false) }                         // RR H
-	instr[0x1d] = func() { cpu.Registers.L = rotateRight(cpu, cpu.Registers.L, false) }                         // RR L
-	instr[0x1e] = func() { MemWrite(cpu.Registers.HL(), rotateRight(cpu, MemRead(cpu.Registers.HL()), false)) } // RR (HL)
-	instr[0x1f] = func() { cpu.Registers.A = rotateRight(cpu, cpu.Registers.A, false) }                         // RR A
+	instr[0x10] = func() { cpu.Registers.B = rl(cpu, cpu.Registers.B) }                         // RL B
+	instr[0x11] = func() { cpu.Registers.C = rl(cpu, cpu.Registers.C) }                         // RL C
+	instr[0x12] = func() { cpu.Registers.D = rl(cpu, cpu.Registers.D) }                         // RL D
+	instr[0x13] = func() { cpu.Registers.E = rl(cpu, cpu.Registers.E) }                         // RL E
+	instr[0x14] = func() { cpu.Registers.H = rl(cpu, cpu.Registers.H) }                         // RL H
+	instr[0x15] = func() { cpu.Registers.L = rl(cpu, cpu.Registers.L) }                         // RL L
+	instr[0x16] = func() { MemWrite(cpu.Registers.HL(), rl(cpu, MemRead(cpu.Registers.HL()))) } // RL (HL)
+	instr[0x17] = func() { cpu.Registers.A = rl(cpu, cpu.Registers.A) }                         // RL A
+	instr[0x18] = func() { cpu.Registers.B = rr(cpu, cpu.Registers.B) }                         // RR B
+	instr[0x19] = func() { cpu.Registers.C = rr(cpu, cpu.Registers.C) }                         // RR C
+	instr[0x1a] = func() { cpu.Registers.D = rr(cpu, cpu.Registers.D) }                         // RR D
+	instr[0x1b] = func() { cpu.Registers.E = rr(cpu, cpu.Registers.E) }                         // RR E
+	instr[0x1c] = func() { cpu.Registers.H = rr(cpu, cpu.Registers.H) }                         // RR H
+	instr[0x1d] = func() { cpu.Registers.L = rr(cpu, cpu.Registers.L) }                         // RR L
+	instr[0x1e] = func() { MemWrite(cpu.Registers.HL(), rr(cpu, MemRead(cpu.Registers.HL()))) } // RR (HL)
+	instr[0x1f] = func() { cpu.Registers.A = rr(cpu, cpu.Registers.A) }                         // RR A
 
 	instr[0x20] = func() { cpu.Registers.B = sla(cpu, cpu.Registers.B) }                         // SLA B
 	instr[0x21] = func() { cpu.Registers.C = sla(cpu, cpu.Registers.C) }                         // SLA C
@@ -279,24 +279,6 @@ func CBInstructions(cpu *CPU) []func() {
 	return instr
 }
 
-func rotateLeft(cpu *CPU, val byte, withCarry bool) byte {
-	if withCarry {
-		rlc(cpu, val)
-	} else {
-		rl(cpu, val)
-	}
-	return val
-}
-
-func rotateRight(cpu *CPU, val byte, withCarry bool) byte {
-	if withCarry {
-		rrc(cpu, val)
-	} else {
-		rr(cpu, val)
-	}
-	return val
-}
-
 // RLC n -- Rotate n left. Old bit 7 to Carry flag.
 func rlc(cpu *CPU, n byte) byte {
 	leavingBit := n >> 7
@@ -310,50 +292,53 @@ func rlc(cpu *CPU, n byte) byte {
 }
 
 // RL n -- Rotate n left through Carry flag.
-func rl(cpu *CPU, n byte) {
-	leavingBit := cpu.Registers.A >> 7
+func rl(cpu *CPU, n byte) byte {
+	leavingBit := n >> 7
 	var carry byte = 0
 	if cpu.Carry() {
 		carry = 1
 	}
-	cpu.Registers.A = cpu.Registers.A<<1 | carry
+	n = n<<1 | carry
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(n == 0)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
+	return n
 }
 
 // RRC n -- Rotate n right. Old bit 0 to Carry flag.
-func rrc(cpu *CPU, n byte) {
-	leavingBit := cpu.Registers.A & 1
-	cpu.Registers.A = cpu.Registers.A >> 1
+func rrc(cpu *CPU, n byte) byte {
+	leavingBit := n & 1
+	n = n >> 1
 	if leavingBit == 1 {
-		cpu.Registers.A |= 0x80
+		n |= 0x80
 	}
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(n == 0)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
+	return n
 }
 
 // RR n -- Rotate n right through Carry flag.
-func rr(cpu *CPU, n byte) {
-	leavingBit := cpu.Registers.A & 1
+func rr(cpu *CPU, n byte) byte {
+	leavingBit := n & 1
 	var carry byte = 0
 	if cpu.Carry() {
 		carry = 1
 	}
-	cpu.Registers.A = cpu.Registers.A >> 1
+	n = n >> 1
 	if carry == 1 {
-		cpu.Registers.A |= 0x80
+		n |= 0x80
 	}
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(n == 0)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
+	return n
 }
 
 // SLA n -- Shift n left into Carry. LSB of n set to 0.
