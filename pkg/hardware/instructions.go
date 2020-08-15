@@ -25,24 +25,24 @@ func Instructions(cpu *CPU) []func() {
 	instr[0x0e] = func() { cpu.Registers.C = cpu.Fetch() }                     // LD C,n
 	instr[0x0f] = func() { rrca(cpu) }                                         // RRCA
 
-	instr[0x10] = func() { stop(cpu) }                                           // STOP
-	instr[0x11] = func() { cpu.Registers.SetDE(cpu.Fetch16()) }                  // LD DE,nn
-	instr[0x12] = func() { MemWrite(cpu.Registers.DE(), cpu.Registers.A) }       // LD (DE),A
-	instr[0x13] = func() { incNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) }   // INC DE
-	instr[0x14] = func() { incN(cpu, &cpu.Registers.D) }                         // INC D
-	instr[0x15] = func() { decN(cpu, &cpu.Registers.D) }                         // DEC D
-	instr[0x16] = func() { cpu.Registers.D = cpu.Fetch() }                       // LD D,n
-	instr[0x17] = func() { rla(cpu) }                                            // RLA
-	instr[0x18] = func() { cpu.PC = uint16(int32(cpu.PC) + int32(cpu.Fetch())) } // JR n
-	instr[0x19] = func() { addHL(cpu, cpu.Registers.DE()) }                      // ADD HL,DE
-	instr[0x1a] = func() { cpu.Registers.A = MemRead(cpu.Registers.DE()) }       // LD A,(DE)
-	instr[0x1b] = func() { decNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) }   // DEC DE
-	instr[0x1c] = func() { incN(cpu, &cpu.Registers.E) }                         // INC E
-	instr[0x1d] = func() { decN(cpu, &cpu.Registers.E) }                         // DEC E
-	instr[0x1e] = func() { cpu.Registers.E = cpu.Fetch() }                       // LD E,n
-	instr[0x1f] = func() { rra(cpu) }                                            // RRA
+	instr[0x10] = func() { stop(cpu) }                                         // STOP
+	instr[0x11] = func() { cpu.Registers.SetDE(cpu.Fetch16()) }                // LD DE,nn
+	instr[0x12] = func() { MemWrite(cpu.Registers.DE(), cpu.Registers.A) }     // LD (DE),A
+	instr[0x13] = func() { incNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) } // INC DE
+	instr[0x14] = func() { incN(cpu, &cpu.Registers.D) }                       // INC D
+	instr[0x15] = func() { decN(cpu, &cpu.Registers.D) }                       // DEC D
+	instr[0x16] = func() { cpu.Registers.D = cpu.Fetch() }                     // LD D,n
+	instr[0x17] = func() { rla(cpu) }                                          // RLA
+	instr[0x18] = func() { jr(cpu, int8(cpu.Fetch())) }                        // JR n
+	instr[0x19] = func() { addHL(cpu, cpu.Registers.DE()) }                    // ADD HL,DE
+	instr[0x1a] = func() { cpu.Registers.A = MemRead(cpu.Registers.DE()) }     // LD A,(DE)
+	instr[0x1b] = func() { decNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) } // DEC DE
+	instr[0x1c] = func() { incN(cpu, &cpu.Registers.E) }                       // INC E
+	instr[0x1d] = func() { decN(cpu, &cpu.Registers.E) }                       // DEC E
+	instr[0x1e] = func() { cpu.Registers.E = cpu.Fetch() }                     // LD E,n
+	instr[0x1f] = func() { rra(cpu) }                                          // RRA
 
-	instr[0x20] = func() { jrCC(cpu, !cpu.Zero(), cpu.Fetch()) }               // JP NZ,*
+	instr[0x20] = func() { jrCC(cpu, !cpu.Zero(), int8(cpu.Fetch())) }         // JP NZ,*
 	instr[0x21] = func() { cpu.Registers.SetHL(cpu.Fetch16()) }                // LD HL,nn
 	instr[0x22] = func() { ldiHLA(cpu) }                                       // LDI (HL),A
 	instr[0x23] = func() { incNN(cpu, cpu.Registers.HL, cpu.Registers.SetHL) } // INC HL
@@ -50,7 +50,7 @@ func Instructions(cpu *CPU) []func() {
 	instr[0x25] = func() { decN(cpu, &cpu.Registers.H) }                       // DEC H
 	instr[0x26] = func() { cpu.Registers.H = cpu.Fetch() }                     // LD H,n
 	instr[0x27] = func() { daa(cpu) }                                          // DAA
-	instr[0x28] = func() { jrCC(cpu, cpu.Zero(), cpu.Fetch()) }                // JP Z,*
+	instr[0x28] = func() { jrCC(cpu, cpu.Zero(), int8(cpu.Fetch())) }          // JP Z,*
 	instr[0x29] = func() { addHL(cpu, cpu.Registers.HL()) }                    // ADD HL,HL
 	instr[0x2a] = func() { ldiAHL(cpu) }                                       // LDI A,(HL)
 	instr[0x2b] = func() { decNN(cpu, cpu.Registers.HL, cpu.Registers.SetHL) } // DEC HL
@@ -59,22 +59,22 @@ func Instructions(cpu *CPU) []func() {
 	instr[0x2e] = func() { cpu.Registers.L = cpu.Fetch() }                     // LD L,n
 	instr[0x2f] = func() { cpl(cpu) }                                          // CPL
 
-	instr[0x30] = func() { jrCC(cpu, !cpu.Carry(), cpu.Fetch()) }      // JP NC,*
-	instr[0x31] = func() { cpu.SP = cpu.Fetch16() }                    // LD SP,nn
-	instr[0x32] = func() { lddHLA(cpu) }                               // LDD (HL),A
-	instr[0x33] = func() { cpu.SP++ }                                  // INC SP
-	instr[0x34] = func() { incHL(cpu, cpu.Registers.HL()) }            // INC (HL)
-	instr[0x35] = func() { decHL(cpu, cpu.Registers.HL()) }            // DEC (HL)
-	instr[0x36] = func() { MemWrite(cpu.Registers.HL(), cpu.Fetch()) } // LD (HL),n
-	instr[0x37] = func() { scf(cpu) }                                  // SCF
-	instr[0x38] = func() { jrCC(cpu, cpu.Carry(), cpu.Fetch()) }       // JP C,*
-	instr[0x39] = func() { addHL(cpu, cpu.SP) }                        // ADD HL,SP
-	instr[0x3a] = func() { lddAHL(cpu) }                               // LDD A,(HL)
-	instr[0x3b] = func() { cpu.SP-- }                                  // DEC SP
-	instr[0x3c] = func() { incN(cpu, &cpu.Registers.A) }               // INC A
-	instr[0x3d] = func() { decN(cpu, &cpu.Registers.A) }               // DEC A
-	instr[0x3e] = func() { cpu.Registers.A = cpu.Fetch() }             // LD A,#
-	instr[0x3f] = func() { ccf(cpu) }                                  // CCF
+	instr[0x30] = func() { jrCC(cpu, !cpu.Carry(), int8(cpu.Fetch())) } // JP NC,*
+	instr[0x31] = func() { cpu.SP = cpu.Fetch16() }                     // LD SP,nn
+	instr[0x32] = func() { lddHLA(cpu) }                                // LDD (HL),A
+	instr[0x33] = func() { cpu.SP++ }                                   // INC SP
+	instr[0x34] = func() { incHL(cpu, cpu.Registers.HL()) }             // INC (HL)
+	instr[0x35] = func() { decHL(cpu, cpu.Registers.HL()) }             // DEC (HL)
+	instr[0x36] = func() { MemWrite(cpu.Registers.HL(), cpu.Fetch()) }  // LD (HL),n
+	instr[0x37] = func() { scf(cpu) }                                   // SCF
+	instr[0x38] = func() { jrCC(cpu, cpu.Carry(), int8(cpu.Fetch())) }  // JP C,*
+	instr[0x39] = func() { addHL(cpu, cpu.SP) }                         // ADD HL,SP
+	instr[0x3a] = func() { lddAHL(cpu) }                                // LDD A,(HL)
+	instr[0x3b] = func() { cpu.SP-- }                                   // DEC SP
+	instr[0x3c] = func() { incN(cpu, &cpu.Registers.A) }                // INC A
+	instr[0x3d] = func() { decN(cpu, &cpu.Registers.A) }                // DEC A
+	instr[0x3e] = func() { cpu.Registers.A = cpu.Fetch() }              // LD A,#
+	instr[0x3f] = func() { ccf(cpu) }                                   // CCF
 
 	instr[0x40] = func() {}                                                // LD B,B
 	instr[0x41] = func() { cpu.Registers.B = cpu.Registers.C }             // LD B,C
@@ -662,8 +662,14 @@ func jpCC(cpu *CPU, condition bool, n uint16) {
 	}
 }
 
+// JR n -- Add n to current address and jump to it.
+func jr(cpu *CPU, n int8) {
+	address := int32(cpu.PC) + int32(n)
+	cpu.PC = uint16(address)
+}
+
 // JR cc,nn -- If  condition is true then add n to current address and jump to it.
-func jrCC(cpu *CPU, condition bool, n byte) {
+func jrCC(cpu *CPU, condition bool, n int8) {
 	if condition {
 		address := int32(cpu.PC) + int32(n)
 		cpu.PC = uint16(address)

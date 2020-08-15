@@ -1,13 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
-)
 
-var memory = make([]byte, math.MaxUint16)
+	"github.com/v4t/gomb/pkg/hardware"
+)
 
 func main() {
 	if len(os.Args) != 2 {
@@ -19,11 +19,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when loading ROM: %v", err)
 	}
-	if len(rom) > len(memory) {
+	if len(rom) > len(hardware.Memory) {
 		log.Fatalf("Rom doesn't fit in memory")
 	}
 
-	copy(memory[:], rom)
+	copy(hardware.Memory[:], rom)
+	cpu := hardware.InitializeCPU()
+
+	fmt.Println("STARTING")
+	for i := 0; i < 1000000; i++ {
+		fmt.Printf("PC %x\n", cpu.PC)
+		cpu.Execute()
+		if(cpu.PC > 0x237) { panic("foo")}
+	}
+
 	os.Exit(0)
 }
 

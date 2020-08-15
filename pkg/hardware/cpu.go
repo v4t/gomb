@@ -6,7 +6,8 @@ import (
 	"math"
 )
 
-var memory = make([]byte, math.MaxUint16)
+// Memory contains emulator memory
+var Memory = make([]byte, math.MaxUint16+1)
 
 // Clock represents cpu timer.
 type Clock struct {
@@ -32,15 +33,49 @@ type CPU struct {
 	SP        uint16
 }
 
+// InitializeCPU initializes cpu values
+func InitializeCPU() *CPU {
+	cpu := &CPU{
+		Registers: Registers{
+			A: 0x11,
+			B: 0x00,
+			C: 0x00,
+			D: 0xff,
+			E: 0x56,
+			H: 0x00,
+			L: 0x0d,
+			F: 0x80,
+		},
+		Clock: Clock{machine: 0, cpu: 0},
+		PC:    0x100,
+		SP:    0xfffe,
+	}
+	return cpu
+}
+
 // Execute next CPU cycle.
 func (cpu *CPU) Execute() {
+	instr := Instructions(cpu)
+	cbInstr := CBInstructions(cpu)
+
 	op := cpu.Fetch()
-	fmt.Println(op)
+	if op == 0xcb {
+		op = cpu.Fetch()
+		cbInstr[op]()
+		fmt.Println("CB", fmt.Sprintf("%02x", op))
+	} else {
+		instr[op]()
+		// fmt.Println(fmt.Sprintf("%02x", op))
+	}
+}
+
+func (cpu *CPU) printDebug() {
+
 }
 
 // Fetch retrieve next byte from memory.
 func (cpu *CPU) Fetch() byte {
-	op := memory[cpu.PC]
+	op := Memory[cpu.PC]
 	cpu.PC++
 	return op
 }
@@ -110,12 +145,12 @@ func (cpu *CPU) SetZero(value bool) {
 
 // MemRead read byte from memory.
 func MemRead(address uint16) byte {
-	return memory[address]
+	return Memory[address]
 }
 
 // MemWrite write byte to memory.
 func MemWrite(address uint16, value byte) {
-	memory[address] = value
+	Memory[address] = value
 }
 
 // EnableInterrupts enables cpu interrupts.
