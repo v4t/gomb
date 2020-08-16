@@ -55,16 +55,13 @@ func InitializeCPU() *CPU {
 
 // Execute next CPU cycle.
 func (cpu *CPU) Execute() {
-	instr := Instructions(cpu)
-	cbInstr := CBInstructions(cpu)
-
 	op := cpu.Fetch()
 	if op == 0xcb {
 		op = cpu.Fetch()
-		cbInstr[op]()
+		ExecuteCBInstruction(cpu, op)
 		fmt.Println("CB", fmt.Sprintf("%02x", op))
 	} else {
-		instr[op]()
+		ExecuteInstruction(cpu, op)
 		// fmt.Println(fmt.Sprintf("%02x", op))
 	}
 }
