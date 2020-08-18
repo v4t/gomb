@@ -39,39 +39,39 @@ var InstructionCycles = [0x100]int{
 func initInstructionList(cpu *CPU) {
 	instructions = make([]func(), 0x100)
 
-	instructions[0x00] = nop                                                          // NOP
-	instructions[0x01] = func() { cpu.Registers.SetBC(cpu.Fetch16()) }                // LD BC,nn
-	instructions[0x02] = func() { MemWrite(cpu.Registers.BC(), cpu.Registers.A) }     // LD (BC),A
-	instructions[0x03] = func() { incNN(cpu, cpu.Registers.BC, cpu.Registers.SetBC) } // INC BC
-	instructions[0x04] = func() { incN(cpu, &cpu.Registers.B) }                       // INC B
-	instructions[0x05] = func() { decN(cpu, &cpu.Registers.B) }                       // DEC B
-	instructions[0x06] = func() { cpu.Registers.B = cpu.Fetch() }                     // LD B,n
-	instructions[0x07] = func() { rlca(cpu) }                                         // RLCA
-	instructions[0x08] = func() { ldNNSP(cpu) }                                       // LD (nn),SP
-	instructions[0x09] = func() { addHL(cpu, cpu.Registers.BC()) }                    // ADD HL,BC
-	instructions[0x0a] = func() { cpu.Registers.A = MemRead(cpu.Registers.BC()) }     // LD A,(BC)
-	instructions[0x0b] = func() { decNN(cpu, cpu.Registers.BC, cpu.Registers.SetBC) } // DEC BC
-	instructions[0x0c] = func() { incN(cpu, &cpu.Registers.C) }                       // INC C
-	instructions[0x0d] = func() { decN(cpu, &cpu.Registers.C) }                       // DEC C
-	instructions[0x0e] = func() { cpu.Registers.C = cpu.Fetch() }                     // LD C,n
-	instructions[0x0f] = func() { rrca(cpu) }                                         // RRCA
+	instructions[0x00] = nop                                                           // NOP
+	instructions[0x01] = func() { cpu.Registers.SetBC(cpu.Fetch16()) }                 // LD BC,nn
+	instructions[0x02] = func() { cpu.MMU.Write(cpu.Registers.BC(), cpu.Registers.A) } // LD (BC),A
+	instructions[0x03] = func() { incNN(cpu, cpu.Registers.BC, cpu.Registers.SetBC) }  // INC BC
+	instructions[0x04] = func() { incN(cpu, &cpu.Registers.B) }                        // INC B
+	instructions[0x05] = func() { decN(cpu, &cpu.Registers.B) }                        // DEC B
+	instructions[0x06] = func() { cpu.Registers.B = cpu.Fetch() }                      // LD B,n
+	instructions[0x07] = func() { rlca(cpu) }                                          // RLCA
+	instructions[0x08] = func() { ldNNSP(cpu) }                                        // LD (nn),SP
+	instructions[0x09] = func() { addHL(cpu, cpu.Registers.BC()) }                     // ADD HL,BC
+	instructions[0x0a] = func() { cpu.Registers.A = cpu.MMU.Read(cpu.Registers.BC()) } // LD A,(BC)
+	instructions[0x0b] = func() { decNN(cpu, cpu.Registers.BC, cpu.Registers.SetBC) }  // DEC BC
+	instructions[0x0c] = func() { incN(cpu, &cpu.Registers.C) }                        // INC C
+	instructions[0x0d] = func() { decN(cpu, &cpu.Registers.C) }                        // DEC C
+	instructions[0x0e] = func() { cpu.Registers.C = cpu.Fetch() }                      // LD C,n
+	instructions[0x0f] = func() { rrca(cpu) }                                          // RRCA
 
-	instructions[0x10] = func() { stop(cpu) }                                         // STOP
-	instructions[0x11] = func() { cpu.Registers.SetDE(cpu.Fetch16()) }                // LD DE,nn
-	instructions[0x12] = func() { MemWrite(cpu.Registers.DE(), cpu.Registers.A) }     // LD (DE),A
-	instructions[0x13] = func() { incNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) } // INC DE
-	instructions[0x14] = func() { incN(cpu, &cpu.Registers.D) }                       // INC D
-	instructions[0x15] = func() { decN(cpu, &cpu.Registers.D) }                       // DEC D
-	instructions[0x16] = func() { cpu.Registers.D = cpu.Fetch() }                     // LD D,n
-	instructions[0x17] = func() { rla(cpu) }                                          // RLA
-	instructions[0x18] = func() { jr(cpu, int8(cpu.Fetch())) }                        // JR n
-	instructions[0x19] = func() { addHL(cpu, cpu.Registers.DE()) }                    // ADD HL,DE
-	instructions[0x1a] = func() { cpu.Registers.A = MemRead(cpu.Registers.DE()) }     // LD A,(DE)
-	instructions[0x1b] = func() { decNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) } // DEC DE
-	instructions[0x1c] = func() { incN(cpu, &cpu.Registers.E) }                       // INC E
-	instructions[0x1d] = func() { decN(cpu, &cpu.Registers.E) }                       // DEC E
-	instructions[0x1e] = func() { cpu.Registers.E = cpu.Fetch() }                     // LD E,n
-	instructions[0x1f] = func() { rra(cpu) }                                          // RRA
+	instructions[0x10] = func() { stop(cpu) }                                          // STOP
+	instructions[0x11] = func() { cpu.Registers.SetDE(cpu.Fetch16()) }                 // LD DE,nn
+	instructions[0x12] = func() { cpu.MMU.Write(cpu.Registers.DE(), cpu.Registers.A) } // LD (DE),A
+	instructions[0x13] = func() { incNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) }  // INC DE
+	instructions[0x14] = func() { incN(cpu, &cpu.Registers.D) }                        // INC D
+	instructions[0x15] = func() { decN(cpu, &cpu.Registers.D) }                        // DEC D
+	instructions[0x16] = func() { cpu.Registers.D = cpu.Fetch() }                      // LD D,n
+	instructions[0x17] = func() { rla(cpu) }                                           // RLA
+	instructions[0x18] = func() { jr(cpu, int8(cpu.Fetch())) }                         // JR n
+	instructions[0x19] = func() { addHL(cpu, cpu.Registers.DE()) }                     // ADD HL,DE
+	instructions[0x1a] = func() { cpu.Registers.A = cpu.MMU.Read(cpu.Registers.DE()) } // LD A,(DE)
+	instructions[0x1b] = func() { decNN(cpu, cpu.Registers.DE, cpu.Registers.SetDE) }  // DEC DE
+	instructions[0x1c] = func() { incN(cpu, &cpu.Registers.E) }                        // INC E
+	instructions[0x1d] = func() { decN(cpu, &cpu.Registers.E) }                        // DEC E
+	instructions[0x1e] = func() { cpu.Registers.E = cpu.Fetch() }                      // LD E,n
+	instructions[0x1f] = func() { rra(cpu) }                                           // RRA
 
 	instructions[0x20] = func() { jrCC(cpu, !cpu.Zero(), int8(cpu.Fetch())) }         // JP NZ,*
 	instructions[0x21] = func() { cpu.Registers.SetHL(cpu.Fetch16()) }                // LD HL,nn
@@ -90,158 +90,158 @@ func initInstructionList(cpu *CPU) {
 	instructions[0x2e] = func() { cpu.Registers.L = cpu.Fetch() }                     // LD L,n
 	instructions[0x2f] = func() { cpl(cpu) }                                          // CPL
 
-	instructions[0x30] = func() { jrCC(cpu, !cpu.Carry(), int8(cpu.Fetch())) } // JP NC,*
-	instructions[0x31] = func() { cpu.SP = cpu.Fetch16() }                     // LD SP,nn
-	instructions[0x32] = func() { lddHLA(cpu) }                                // LDD (HL),A
-	instructions[0x33] = func() { cpu.SP++ }                                   // INC SP
-	instructions[0x34] = func() { incHL(cpu, cpu.Registers.HL()) }             // INC (HL)
-	instructions[0x35] = func() { decHL(cpu, cpu.Registers.HL()) }             // DEC (HL)
-	instructions[0x36] = func() { MemWrite(cpu.Registers.HL(), cpu.Fetch()) }  // LD (HL),n
-	instructions[0x37] = func() { scf(cpu) }                                   // SCF
-	instructions[0x38] = func() { jrCC(cpu, cpu.Carry(), int8(cpu.Fetch())) }  // JP C,*
-	instructions[0x39] = func() { addHL(cpu, cpu.SP) }                         // ADD HL,SP
-	instructions[0x3a] = func() { lddAHL(cpu) }                                // LDD A,(HL)
-	instructions[0x3b] = func() { cpu.SP-- }                                   // DEC SP
-	instructions[0x3c] = func() { incN(cpu, &cpu.Registers.A) }                // INC A
-	instructions[0x3d] = func() { decN(cpu, &cpu.Registers.A) }                // DEC A
-	instructions[0x3e] = func() { cpu.Registers.A = cpu.Fetch() }              // LD A,#
-	instructions[0x3f] = func() { ccf(cpu) }                                   // CCF
+	instructions[0x30] = func() { jrCC(cpu, !cpu.Carry(), int8(cpu.Fetch())) }     // JP NC,*
+	instructions[0x31] = func() { cpu.SP = cpu.Fetch16() }                         // LD SP,nn
+	instructions[0x32] = func() { lddHLA(cpu) }                                    // LDD (HL),A
+	instructions[0x33] = func() { cpu.SP++ }                                       // INC SP
+	instructions[0x34] = func() { incHL(cpu, cpu.Registers.HL()) }                 // INC (HL)
+	instructions[0x35] = func() { decHL(cpu, cpu.Registers.HL()) }                 // DEC (HL)
+	instructions[0x36] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Fetch()) } // LD (HL),n
+	instructions[0x37] = func() { scf(cpu) }                                       // SCF
+	instructions[0x38] = func() { jrCC(cpu, cpu.Carry(), int8(cpu.Fetch())) }      // JP C,*
+	instructions[0x39] = func() { addHL(cpu, cpu.SP) }                             // ADD HL,SP
+	instructions[0x3a] = func() { lddAHL(cpu) }                                    // LDD A,(HL)
+	instructions[0x3b] = func() { cpu.SP-- }                                       // DEC SP
+	instructions[0x3c] = func() { incN(cpu, &cpu.Registers.A) }                    // INC A
+	instructions[0x3d] = func() { decN(cpu, &cpu.Registers.A) }                    // DEC A
+	instructions[0x3e] = func() { cpu.Registers.A = cpu.Fetch() }                  // LD A,#
+	instructions[0x3f] = func() { ccf(cpu) }                                       // CCF
 
-	instructions[0x40] = func() {}                                                // LD B,B
-	instructions[0x41] = func() { cpu.Registers.B = cpu.Registers.C }             // LD B,C
-	instructions[0x42] = func() { cpu.Registers.B = cpu.Registers.D }             // LD B,D
-	instructions[0x43] = func() { cpu.Registers.B = cpu.Registers.E }             // LD B,E
-	instructions[0x44] = func() { cpu.Registers.B = cpu.Registers.H }             // LD B,H
-	instructions[0x45] = func() { cpu.Registers.B = cpu.Registers.L }             // LD B,L
-	instructions[0x46] = func() { cpu.Registers.B = MemRead(cpu.Registers.HL()) } // LD B,(HL)
-	instructions[0x47] = func() { cpu.Registers.B = cpu.Registers.A }             // LD B,A
-	instructions[0x48] = func() { cpu.Registers.C = cpu.Registers.B }             // LD C,B
-	instructions[0x49] = func() {}                                                // LD C,C
-	instructions[0x4a] = func() { cpu.Registers.C = cpu.Registers.D }             // LD C,D
-	instructions[0x4b] = func() { cpu.Registers.C = cpu.Registers.E }             // LD C,E
-	instructions[0x4c] = func() { cpu.Registers.C = cpu.Registers.H }             // LD C,H
-	instructions[0x4d] = func() { cpu.Registers.C = cpu.Registers.L }             // LD C,L
-	instructions[0x4e] = func() { cpu.Registers.C = MemRead(cpu.Registers.HL()) } // LD C,(HL)
-	instructions[0x4f] = func() { cpu.Registers.C = cpu.Registers.A }             // LD C,A
+	instructions[0x40] = func() {}                                                     // LD B,B
+	instructions[0x41] = func() { cpu.Registers.B = cpu.Registers.C }                  // LD B,C
+	instructions[0x42] = func() { cpu.Registers.B = cpu.Registers.D }                  // LD B,D
+	instructions[0x43] = func() { cpu.Registers.B = cpu.Registers.E }                  // LD B,E
+	instructions[0x44] = func() { cpu.Registers.B = cpu.Registers.H }                  // LD B,H
+	instructions[0x45] = func() { cpu.Registers.B = cpu.Registers.L }                  // LD B,L
+	instructions[0x46] = func() { cpu.Registers.B = cpu.MMU.Read(cpu.Registers.HL()) } // LD B,(HL)
+	instructions[0x47] = func() { cpu.Registers.B = cpu.Registers.A }                  // LD B,A
+	instructions[0x48] = func() { cpu.Registers.C = cpu.Registers.B }                  // LD C,B
+	instructions[0x49] = func() {}                                                     // LD C,C
+	instructions[0x4a] = func() { cpu.Registers.C = cpu.Registers.D }                  // LD C,D
+	instructions[0x4b] = func() { cpu.Registers.C = cpu.Registers.E }                  // LD C,E
+	instructions[0x4c] = func() { cpu.Registers.C = cpu.Registers.H }                  // LD C,H
+	instructions[0x4d] = func() { cpu.Registers.C = cpu.Registers.L }                  // LD C,L
+	instructions[0x4e] = func() { cpu.Registers.C = cpu.MMU.Read(cpu.Registers.HL()) } // LD C,(HL)
+	instructions[0x4f] = func() { cpu.Registers.C = cpu.Registers.A }                  // LD C,A
 
-	instructions[0x50] = func() { cpu.Registers.D = cpu.Registers.B }             // LD D,B
-	instructions[0x51] = func() { cpu.Registers.D = cpu.Registers.C }             // LD D,C
-	instructions[0x52] = func() {}                                                // LD D,D
-	instructions[0x53] = func() { cpu.Registers.D = cpu.Registers.E }             // LD D,E
-	instructions[0x54] = func() { cpu.Registers.D = cpu.Registers.H }             // LD D,H
-	instructions[0x55] = func() { cpu.Registers.D = cpu.Registers.L }             // LD D,L
-	instructions[0x56] = func() { cpu.Registers.D = MemRead(cpu.Registers.HL()) } // LD D,(HL)
-	instructions[0x57] = func() { cpu.Registers.D = cpu.Registers.A }             // LD D,A
-	instructions[0x58] = func() { cpu.Registers.E = cpu.Registers.B }             // LD E,B
-	instructions[0x59] = func() { cpu.Registers.E = cpu.Registers.C }             // LD E,C
-	instructions[0x5a] = func() { cpu.Registers.E = cpu.Registers.D }             // LD E,D
-	instructions[0x5b] = func() {}                                                // LD E,E
-	instructions[0x5c] = func() { cpu.Registers.E = cpu.Registers.H }             // LD E,H
-	instructions[0x5d] = func() { cpu.Registers.E = cpu.Registers.L }             // LD E,L
-	instructions[0x5e] = func() { cpu.Registers.E = MemRead(cpu.Registers.HL()) } // LD E,(HL)
-	instructions[0x5f] = func() { cpu.Registers.E = cpu.Registers.A }             // LD E,A
+	instructions[0x50] = func() { cpu.Registers.D = cpu.Registers.B }                  // LD D,B
+	instructions[0x51] = func() { cpu.Registers.D = cpu.Registers.C }                  // LD D,C
+	instructions[0x52] = func() {}                                                     // LD D,D
+	instructions[0x53] = func() { cpu.Registers.D = cpu.Registers.E }                  // LD D,E
+	instructions[0x54] = func() { cpu.Registers.D = cpu.Registers.H }                  // LD D,H
+	instructions[0x55] = func() { cpu.Registers.D = cpu.Registers.L }                  // LD D,L
+	instructions[0x56] = func() { cpu.Registers.D = cpu.MMU.Read(cpu.Registers.HL()) } // LD D,(HL)
+	instructions[0x57] = func() { cpu.Registers.D = cpu.Registers.A }                  // LD D,A
+	instructions[0x58] = func() { cpu.Registers.E = cpu.Registers.B }                  // LD E,B
+	instructions[0x59] = func() { cpu.Registers.E = cpu.Registers.C }                  // LD E,C
+	instructions[0x5a] = func() { cpu.Registers.E = cpu.Registers.D }                  // LD E,D
+	instructions[0x5b] = func() {}                                                     // LD E,E
+	instructions[0x5c] = func() { cpu.Registers.E = cpu.Registers.H }                  // LD E,H
+	instructions[0x5d] = func() { cpu.Registers.E = cpu.Registers.L }                  // LD E,L
+	instructions[0x5e] = func() { cpu.Registers.E = cpu.MMU.Read(cpu.Registers.HL()) } // LD E,(HL)
+	instructions[0x5f] = func() { cpu.Registers.E = cpu.Registers.A }                  // LD E,A
 
-	instructions[0x60] = func() { cpu.Registers.H = cpu.Registers.B }             // LD H,B
-	instructions[0x61] = func() { cpu.Registers.H = cpu.Registers.C }             // LD H,C
-	instructions[0x62] = func() { cpu.Registers.H = cpu.Registers.D }             // LD H,D
-	instructions[0x63] = func() { cpu.Registers.H = cpu.Registers.E }             // LD H,E
-	instructions[0x64] = func() {}                                                // LD H,H
-	instructions[0x65] = func() { cpu.Registers.H = cpu.Registers.L }             // LD H,L
-	instructions[0x66] = func() { cpu.Registers.H = MemRead(cpu.Registers.HL()) } // LD H,(HL)
-	instructions[0x67] = func() { cpu.Registers.H = cpu.Registers.A }             // LD H,A
-	instructions[0x68] = func() { cpu.Registers.L = cpu.Registers.B }             // LD L,B
-	instructions[0x69] = func() { cpu.Registers.L = cpu.Registers.C }             // LD L,C
-	instructions[0x6a] = func() { cpu.Registers.L = cpu.Registers.D }             // LD L,D
-	instructions[0x6b] = func() { cpu.Registers.L = cpu.Registers.E }             // LD L,E
-	instructions[0x6c] = func() { cpu.Registers.L = cpu.Registers.H }             // LD L,H
-	instructions[0x6d] = func() {}                                                // LD L,L
-	instructions[0x6e] = func() { cpu.Registers.L = MemRead(cpu.Registers.HL()) } // LD L,(HL)
-	instructions[0x6f] = func() { cpu.Registers.L = cpu.Registers.A }             // LD L,A
+	instructions[0x60] = func() { cpu.Registers.H = cpu.Registers.B }                  // LD H,B
+	instructions[0x61] = func() { cpu.Registers.H = cpu.Registers.C }                  // LD H,C
+	instructions[0x62] = func() { cpu.Registers.H = cpu.Registers.D }                  // LD H,D
+	instructions[0x63] = func() { cpu.Registers.H = cpu.Registers.E }                  // LD H,E
+	instructions[0x64] = func() {}                                                     // LD H,H
+	instructions[0x65] = func() { cpu.Registers.H = cpu.Registers.L }                  // LD H,L
+	instructions[0x66] = func() { cpu.Registers.H = cpu.MMU.Read(cpu.Registers.HL()) } // LD H,(HL)
+	instructions[0x67] = func() { cpu.Registers.H = cpu.Registers.A }                  // LD H,A
+	instructions[0x68] = func() { cpu.Registers.L = cpu.Registers.B }                  // LD L,B
+	instructions[0x69] = func() { cpu.Registers.L = cpu.Registers.C }                  // LD L,C
+	instructions[0x6a] = func() { cpu.Registers.L = cpu.Registers.D }                  // LD L,D
+	instructions[0x6b] = func() { cpu.Registers.L = cpu.Registers.E }                  // LD L,E
+	instructions[0x6c] = func() { cpu.Registers.L = cpu.Registers.H }                  // LD L,H
+	instructions[0x6d] = func() {}                                                     // LD L,L
+	instructions[0x6e] = func() { cpu.Registers.L = cpu.MMU.Read(cpu.Registers.HL()) } // LD L,(HL)
+	instructions[0x6f] = func() { cpu.Registers.L = cpu.Registers.A }                  // LD L,A
 
-	instructions[0x70] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.B) } // LD (HL),B
-	instructions[0x71] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.C) } // LD (HL),C
-	instructions[0x72] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.D) } // LD (HL),D
-	instructions[0x73] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.E) } // LD (HL),E
-	instructions[0x74] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.H) } // LD (HL),H
-	instructions[0x75] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.L) } // LD (HL),L
-	instructions[0x76] = func() { halt(cpu) }                                     // HALT
-	instructions[0x77] = func() { MemWrite(cpu.Registers.HL(), cpu.Registers.A) } // LD (HL),A
-	instructions[0x78] = func() { cpu.Registers.A = cpu.Registers.B }             // LD A,B
-	instructions[0x79] = func() { cpu.Registers.A = cpu.Registers.C }             // LD A,C
-	instructions[0x7a] = func() { cpu.Registers.A = cpu.Registers.D }             // LD A,D
-	instructions[0x7b] = func() { cpu.Registers.A = cpu.Registers.E }             // LD A,E
-	instructions[0x7c] = func() { cpu.Registers.A = cpu.Registers.H }             // LD A,H
-	instructions[0x7d] = func() { cpu.Registers.A = cpu.Registers.L }             // LD A,L
-	instructions[0x7e] = func() { cpu.Registers.A = MemRead(cpu.Registers.HL()) } // LD A,(HL)
-	instructions[0x7f] = func() {}                                                // LD A,A
+	instructions[0x70] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.B) } // LD (HL),B
+	instructions[0x71] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.C) } // LD (HL),C
+	instructions[0x72] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.D) } // LD (HL),D
+	instructions[0x73] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.E) } // LD (HL),E
+	instructions[0x74] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.H) } // LD (HL),H
+	instructions[0x75] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.L) } // LD (HL),L
+	instructions[0x76] = func() { halt(cpu) }                                          // HALT
+	instructions[0x77] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.A) } // LD (HL),A
+	instructions[0x78] = func() { cpu.Registers.A = cpu.Registers.B }                  // LD A,B
+	instructions[0x79] = func() { cpu.Registers.A = cpu.Registers.C }                  // LD A,C
+	instructions[0x7a] = func() { cpu.Registers.A = cpu.Registers.D }                  // LD A,D
+	instructions[0x7b] = func() { cpu.Registers.A = cpu.Registers.E }                  // LD A,E
+	instructions[0x7c] = func() { cpu.Registers.A = cpu.Registers.H }                  // LD A,H
+	instructions[0x7d] = func() { cpu.Registers.A = cpu.Registers.L }                  // LD A,L
+	instructions[0x7e] = func() { cpu.Registers.A = cpu.MMU.Read(cpu.Registers.HL()) } // LD A,(HL)
+	instructions[0x7f] = func() {}                                                     // LD A,A
 
-	instructions[0x80] = func() { add(cpu, cpu.Registers.B) }             // ADD A,B
-	instructions[0x81] = func() { add(cpu, cpu.Registers.C) }             // ADD A,C
-	instructions[0x82] = func() { add(cpu, cpu.Registers.D) }             // ADD A,D
-	instructions[0x83] = func() { add(cpu, cpu.Registers.E) }             // ADD A,E
-	instructions[0x84] = func() { add(cpu, cpu.Registers.H) }             // ADD A,H
-	instructions[0x85] = func() { add(cpu, cpu.Registers.L) }             // ADD A,L
-	instructions[0x86] = func() { add(cpu, MemRead(cpu.Registers.HL())) } // ADD A,(HL)
-	instructions[0x87] = func() { add(cpu, cpu.Registers.A) }             // ADD A,A
-	instructions[0x88] = func() { adc(cpu, cpu.Registers.B) }             // ADC A,B
-	instructions[0x89] = func() { adc(cpu, cpu.Registers.C) }             // ADC A,C
-	instructions[0x8a] = func() { adc(cpu, cpu.Registers.D) }             // ADC A,D
-	instructions[0x8b] = func() { adc(cpu, cpu.Registers.E) }             // ADC A,E
-	instructions[0x8c] = func() { adc(cpu, cpu.Registers.H) }             // ADC A,H
-	instructions[0x8d] = func() { adc(cpu, cpu.Registers.L) }             // ADC A,L
-	instructions[0x8e] = func() { adc(cpu, MemRead(cpu.Registers.HL())) } // ADC A,(HL)
-	instructions[0x8f] = func() { adc(cpu, cpu.Registers.A) }             // ADC A,A
+	instructions[0x80] = func() { add(cpu, cpu.Registers.B) }                  // ADD A,B
+	instructions[0x81] = func() { add(cpu, cpu.Registers.C) }                  // ADD A,C
+	instructions[0x82] = func() { add(cpu, cpu.Registers.D) }                  // ADD A,D
+	instructions[0x83] = func() { add(cpu, cpu.Registers.E) }                  // ADD A,E
+	instructions[0x84] = func() { add(cpu, cpu.Registers.H) }                  // ADD A,H
+	instructions[0x85] = func() { add(cpu, cpu.Registers.L) }                  // ADD A,L
+	instructions[0x86] = func() { add(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // ADD A,(HL)
+	instructions[0x87] = func() { add(cpu, cpu.Registers.A) }                  // ADD A,A
+	instructions[0x88] = func() { adc(cpu, cpu.Registers.B) }                  // ADC A,B
+	instructions[0x89] = func() { adc(cpu, cpu.Registers.C) }                  // ADC A,C
+	instructions[0x8a] = func() { adc(cpu, cpu.Registers.D) }                  // ADC A,D
+	instructions[0x8b] = func() { adc(cpu, cpu.Registers.E) }                  // ADC A,E
+	instructions[0x8c] = func() { adc(cpu, cpu.Registers.H) }                  // ADC A,H
+	instructions[0x8d] = func() { adc(cpu, cpu.Registers.L) }                  // ADC A,L
+	instructions[0x8e] = func() { adc(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // ADC A,(HL)
+	instructions[0x8f] = func() { adc(cpu, cpu.Registers.A) }                  // ADC A,A
 
-	instructions[0x90] = func() { sub(cpu, cpu.Registers.B) }             // SUB A,B
-	instructions[0x91] = func() { sub(cpu, cpu.Registers.C) }             // SUB A,C
-	instructions[0x92] = func() { sub(cpu, cpu.Registers.D) }             // SUB A,D
-	instructions[0x93] = func() { sub(cpu, cpu.Registers.E) }             // SUB A,E
-	instructions[0x94] = func() { sub(cpu, cpu.Registers.H) }             // SUB A,H
-	instructions[0x95] = func() { sub(cpu, cpu.Registers.L) }             // SUB A,L
-	instructions[0x96] = func() { sub(cpu, MemRead(cpu.Registers.HL())) } // SUB A,(HL)
-	instructions[0x97] = func() { sub(cpu, cpu.Registers.A) }             // SUB A,A
-	instructions[0x98] = func() { sbc(cpu, cpu.Registers.B) }             // SBC A,B
-	instructions[0x99] = func() { sbc(cpu, cpu.Registers.C) }             // SBC A,C
-	instructions[0x9a] = func() { sbc(cpu, cpu.Registers.D) }             // SBC A,D
-	instructions[0x9b] = func() { sbc(cpu, cpu.Registers.E) }             // SBC A,E
-	instructions[0x9c] = func() { sbc(cpu, cpu.Registers.H) }             // SBC A,H
-	instructions[0x9d] = func() { sbc(cpu, cpu.Registers.L) }             // SBC A,L
-	instructions[0x9e] = func() { sbc(cpu, MemRead(cpu.Registers.HL())) } // SBC A,(HL)
-	instructions[0x9f] = func() { sbc(cpu, cpu.Registers.D) }             // SBC A,A
+	instructions[0x90] = func() { sub(cpu, cpu.Registers.B) }                  // SUB A,B
+	instructions[0x91] = func() { sub(cpu, cpu.Registers.C) }                  // SUB A,C
+	instructions[0x92] = func() { sub(cpu, cpu.Registers.D) }                  // SUB A,D
+	instructions[0x93] = func() { sub(cpu, cpu.Registers.E) }                  // SUB A,E
+	instructions[0x94] = func() { sub(cpu, cpu.Registers.H) }                  // SUB A,H
+	instructions[0x95] = func() { sub(cpu, cpu.Registers.L) }                  // SUB A,L
+	instructions[0x96] = func() { sub(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // SUB A,(HL)
+	instructions[0x97] = func() { sub(cpu, cpu.Registers.A) }                  // SUB A,A
+	instructions[0x98] = func() { sbc(cpu, cpu.Registers.B) }                  // SBC A,B
+	instructions[0x99] = func() { sbc(cpu, cpu.Registers.C) }                  // SBC A,C
+	instructions[0x9a] = func() { sbc(cpu, cpu.Registers.D) }                  // SBC A,D
+	instructions[0x9b] = func() { sbc(cpu, cpu.Registers.E) }                  // SBC A,E
+	instructions[0x9c] = func() { sbc(cpu, cpu.Registers.H) }                  // SBC A,H
+	instructions[0x9d] = func() { sbc(cpu, cpu.Registers.L) }                  // SBC A,L
+	instructions[0x9e] = func() { sbc(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // SBC A,(HL)
+	instructions[0x9f] = func() { sbc(cpu, cpu.Registers.D) }                  // SBC A,A
 
-	instructions[0xa0] = func() { and(cpu, cpu.Registers.B) }             // AND B
-	instructions[0xa1] = func() { and(cpu, cpu.Registers.C) }             // AND C
-	instructions[0xa2] = func() { and(cpu, cpu.Registers.D) }             // AND D
-	instructions[0xa3] = func() { and(cpu, cpu.Registers.E) }             // AND E
-	instructions[0xa4] = func() { and(cpu, cpu.Registers.H) }             // AND H
-	instructions[0xa5] = func() { and(cpu, cpu.Registers.L) }             // AND L
-	instructions[0xa6] = func() { and(cpu, MemRead(cpu.Registers.HL())) } // AND (HL)
-	instructions[0xa7] = func() { and(cpu, cpu.Registers.A) }             // AND A
-	instructions[0xa8] = func() { xor(cpu, cpu.Registers.B) }             // XOR B
-	instructions[0xa9] = func() { xor(cpu, cpu.Registers.C) }             // XOR C
-	instructions[0xaa] = func() { xor(cpu, cpu.Registers.D) }             // XOR D
-	instructions[0xab] = func() { xor(cpu, cpu.Registers.E) }             // XOR E
-	instructions[0xac] = func() { xor(cpu, cpu.Registers.H) }             // XOR H
-	instructions[0xad] = func() { xor(cpu, cpu.Registers.L) }             // XOR L
-	instructions[0xae] = func() { xor(cpu, MemRead(cpu.Registers.HL())) } // XOR (HL)
-	instructions[0xaf] = func() { xor(cpu, cpu.Registers.A) }             // XOR A
+	instructions[0xa0] = func() { and(cpu, cpu.Registers.B) }                  // AND B
+	instructions[0xa1] = func() { and(cpu, cpu.Registers.C) }                  // AND C
+	instructions[0xa2] = func() { and(cpu, cpu.Registers.D) }                  // AND D
+	instructions[0xa3] = func() { and(cpu, cpu.Registers.E) }                  // AND E
+	instructions[0xa4] = func() { and(cpu, cpu.Registers.H) }                  // AND H
+	instructions[0xa5] = func() { and(cpu, cpu.Registers.L) }                  // AND L
+	instructions[0xa6] = func() { and(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // AND (HL)
+	instructions[0xa7] = func() { and(cpu, cpu.Registers.A) }                  // AND A
+	instructions[0xa8] = func() { xor(cpu, cpu.Registers.B) }                  // XOR B
+	instructions[0xa9] = func() { xor(cpu, cpu.Registers.C) }                  // XOR C
+	instructions[0xaa] = func() { xor(cpu, cpu.Registers.D) }                  // XOR D
+	instructions[0xab] = func() { xor(cpu, cpu.Registers.E) }                  // XOR E
+	instructions[0xac] = func() { xor(cpu, cpu.Registers.H) }                  // XOR H
+	instructions[0xad] = func() { xor(cpu, cpu.Registers.L) }                  // XOR L
+	instructions[0xae] = func() { xor(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // XOR (HL)
+	instructions[0xaf] = func() { xor(cpu, cpu.Registers.A) }                  // XOR A
 
-	instructions[0xb0] = func() { or(cpu, cpu.Registers.B) }             // OR B
-	instructions[0xb1] = func() { or(cpu, cpu.Registers.C) }             // OR C
-	instructions[0xb2] = func() { or(cpu, cpu.Registers.D) }             // OR D
-	instructions[0xb3] = func() { or(cpu, cpu.Registers.E) }             // OR E
-	instructions[0xb4] = func() { or(cpu, cpu.Registers.H) }             // OR H
-	instructions[0xb5] = func() { or(cpu, cpu.Registers.L) }             // OR L
-	instructions[0xb6] = func() { or(cpu, MemRead(cpu.Registers.HL())) } // OR (HL)
-	instructions[0xb7] = func() { or(cpu, cpu.Registers.A) }             // OR A
-	instructions[0xb8] = func() { cp(cpu, cpu.Registers.B) }             // CP B
-	instructions[0xb9] = func() { cp(cpu, cpu.Registers.C) }             // CP C
-	instructions[0xba] = func() { cp(cpu, cpu.Registers.D) }             // CP D
-	instructions[0xbb] = func() { cp(cpu, cpu.Registers.E) }             // CP E
-	instructions[0xbc] = func() { cp(cpu, cpu.Registers.H) }             // CP H
-	instructions[0xbd] = func() { cp(cpu, cpu.Registers.L) }             // CP L
-	instructions[0xbe] = func() { cp(cpu, MemRead(cpu.Registers.HL())) } // CP (HL)
-	instructions[0xbf] = func() { cp(cpu, cpu.Registers.A) }             // CP A
+	instructions[0xb0] = func() { or(cpu, cpu.Registers.B) }                  // OR B
+	instructions[0xb1] = func() { or(cpu, cpu.Registers.C) }                  // OR C
+	instructions[0xb2] = func() { or(cpu, cpu.Registers.D) }                  // OR D
+	instructions[0xb3] = func() { or(cpu, cpu.Registers.E) }                  // OR E
+	instructions[0xb4] = func() { or(cpu, cpu.Registers.H) }                  // OR H
+	instructions[0xb5] = func() { or(cpu, cpu.Registers.L) }                  // OR L
+	instructions[0xb6] = func() { or(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // OR (HL)
+	instructions[0xb7] = func() { or(cpu, cpu.Registers.A) }                  // OR A
+	instructions[0xb8] = func() { cp(cpu, cpu.Registers.B) }                  // CP B
+	instructions[0xb9] = func() { cp(cpu, cpu.Registers.C) }                  // CP C
+	instructions[0xba] = func() { cp(cpu, cpu.Registers.D) }                  // CP D
+	instructions[0xbb] = func() { cp(cpu, cpu.Registers.E) }                  // CP E
+	instructions[0xbc] = func() { cp(cpu, cpu.Registers.H) }                  // CP H
+	instructions[0xbd] = func() { cp(cpu, cpu.Registers.L) }                  // CP L
+	instructions[0xbe] = func() { cp(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // CP (HL)
+	instructions[0xbf] = func() { cp(cpu, cpu.Registers.A) }                  // CP A
 
 	instructions[0xc0] = func() { retCC(cpu, !cpu.Zero()) }                 // RET NZ
 	instructions[0xc1] = func() { cpu.Registers.SetBC(popNN(cpu)) }         // POP BC
@@ -277,39 +277,39 @@ func initInstructionList(cpu *CPU) {
 	instructions[0xde] = func() { sbc(cpu, cpu.Fetch()) }                    // SBC A,#
 	instructions[0xdf] = func() { rst(cpu, 0x18) }                           // RST 18H
 
-	instructions[0xe0] = func() { MemWrite(0xff00+uint16(cpu.Fetch()), cpu.Registers.A) }     // LDH (n),A
-	instructions[0xe1] = func() { cpu.Registers.SetHL(popNN(cpu)) }                           // POP HL
-	instructions[0xe2] = func() { MemWrite(0xff00+uint16(cpu.Registers.C), cpu.Registers.A) } // LD (C),A
-	instructions[0xe3] = xx                                                                   // XX
-	instructions[0xe4] = xx                                                                   // XX
-	instructions[0xe5] = func() { pushNN(cpu, cpu.Registers.HL()) }                           // PUSH HL
-	instructions[0xe6] = func() { and(cpu, cpu.Fetch()) }                                     // AND #
-	instructions[0xe7] = func() { rst(cpu, 0x20) }                                            // RST 20H
-	instructions[0xe8] = func() { addSP(cpu, int8(cpu.Fetch())) }                             // ADD SP,n
-	instructions[0xe9] = func() { cpu.PC = cpu.Registers.HL() }                               // JP (HL)
-	instructions[0xea] = func() { MemWrite(cpu.Fetch16(), cpu.Registers.A) }                  // LD (nn),A
-	instructions[0xeb] = xx                                                                   // XX
-	instructions[0xec] = xx                                                                   // XX
-	instructions[0xed] = xx                                                                   // XX
-	instructions[0xee] = func() { xor(cpu, cpu.Fetch()) }                                     // XOR #
-	instructions[0xef] = func() { rst(cpu, 0x28) }                                            // RST 28H
+	instructions[0xe0] = func() { cpu.MMU.Write(0xff00+uint16(cpu.Fetch()), cpu.Registers.A) }     // LDH (n),A
+	instructions[0xe1] = func() { cpu.Registers.SetHL(popNN(cpu)) }                                // POP HL
+	instructions[0xe2] = func() { cpu.MMU.Write(0xff00+uint16(cpu.Registers.C), cpu.Registers.A) } // LD (C),A
+	instructions[0xe3] = xx                                                                        // XX
+	instructions[0xe4] = xx                                                                        // XX
+	instructions[0xe5] = func() { pushNN(cpu, cpu.Registers.HL()) }                                // PUSH HL
+	instructions[0xe6] = func() { and(cpu, cpu.Fetch()) }                                          // AND #
+	instructions[0xe7] = func() { rst(cpu, 0x20) }                                                 // RST 20H
+	instructions[0xe8] = func() { addSP(cpu, int8(cpu.Fetch())) }                                  // ADD SP,n
+	instructions[0xe9] = func() { cpu.PC = cpu.Registers.HL() }                                    // JP (HL)
+	instructions[0xea] = func() { cpu.MMU.Write(cpu.Fetch16(), cpu.Registers.A) }                  // LD (nn),A
+	instructions[0xeb] = xx                                                                        // XX
+	instructions[0xec] = xx                                                                        // XX
+	instructions[0xed] = xx                                                                        // XX
+	instructions[0xee] = func() { xor(cpu, cpu.Fetch()) }                                          // XOR #
+	instructions[0xef] = func() { rst(cpu, 0x28) }                                                 // RST 28H
 
-	instructions[0xf0] = func() { cpu.Registers.A = MemRead(0xff00 + uint16(cpu.Fetch())) }     // LDH A,(n)
-	instructions[0xf1] = func() { cpu.Registers.SetAF(popNN(cpu)) }                             // POP AF
-	instructions[0xf2] = func() { cpu.Registers.A = MemRead(0xff00 + uint16(cpu.Registers.C)) } // LD A,(C)
-	instructions[0xf3] = func() { DisableInterrupts() }                                         // DI
-	instructions[0xf4] = xx                                                                     // XX
-	instructions[0xf5] = func() { pushNN(cpu, cpu.Registers.AF()) }                             // PUSH AF
-	instructions[0xf6] = func() { or(cpu, cpu.Fetch()) }                                        // OR #
-	instructions[0xf7] = func() { rst(cpu, 0x30) }                                              // RST 30H
-	instructions[0xf8] = func() { ldHLSPPlusN(cpu, int8(cpu.Fetch())) }                         // LD HL,SP+n
-	instructions[0xf9] = func() { cpu.SP = cpu.Registers.HL() }                                 // LD SP,HL
-	instructions[0xfa] = func() { cpu.Registers.A = MemRead(cpu.Fetch16()) }                    // LD A,(nn)
-	instructions[0xfb] = func() { EnableInterrupts() }                                          // EI
-	instructions[0xfc] = xx                                                                     // XX
-	instructions[0xfd] = xx                                                                     // XX
-	instructions[0xfe] = func() { cp(cpu, cpu.Fetch()) }                                        // CP #
-	instructions[0xff] = func() { rst(cpu, 0x38) }                                              // RST 38H
+	instructions[0xf0] = func() { cpu.Registers.A = cpu.MMU.Read(0xff00 + uint16(cpu.Fetch())) }     // LDH A,(n)
+	instructions[0xf1] = func() { cpu.Registers.SetAF(popNN(cpu)) }                                  // POP AF
+	instructions[0xf2] = func() { cpu.Registers.A = cpu.MMU.Read(0xff00 + uint16(cpu.Registers.C)) } // LD A,(C)
+	instructions[0xf3] = func() { DisableInterrupts() }                                              // DI
+	instructions[0xf4] = xx                                                                          // XX
+	instructions[0xf5] = func() { pushNN(cpu, cpu.Registers.AF()) }                                  // PUSH AF
+	instructions[0xf6] = func() { or(cpu, cpu.Fetch()) }                                             // OR #
+	instructions[0xf7] = func() { rst(cpu, 0x30) }                                                   // RST 30H
+	instructions[0xf8] = func() { ldHLSPPlusN(cpu, int8(cpu.Fetch())) }                              // LD HL,SP+n
+	instructions[0xf9] = func() { cpu.SP = cpu.Registers.HL() }                                      // LD SP,HL
+	instructions[0xfa] = func() { cpu.Registers.A = cpu.MMU.Read(cpu.Fetch16()) }                    // LD A,(nn)
+	instructions[0xfb] = func() { EnableInterrupts() }                                               // EI
+	instructions[0xfc] = xx                                                                          // XX
+	instructions[0xfd] = xx                                                                          // XX
+	instructions[0xfe] = func() { cp(cpu, cpu.Fetch()) }                                             // CP #
+	instructions[0xff] = func() { rst(cpu, 0x38) }                                                   // RST 38H
 }
 
 // NOP -- No operation.
@@ -335,9 +335,9 @@ func incN(cpu *CPU, n *byte) {
 
 // INC (HL) -- Increment value at address HL.
 func incHL(cpu *CPU, address uint16) {
-	value := MemRead(address)
+	value := cpu.MMU.Read(address)
 	halfCarry := (value&0xf)+1 > 0xf
-	MemWrite(address, value+1)
+	cpu.MMU.Write(address, value+1)
 	cpu.SetNegative(false)
 	cpu.SetZero(value == 0)
 	cpu.SetHalfCarry(halfCarry)
@@ -354,9 +354,9 @@ func decN(cpu *CPU, n *byte) {
 
 // DEC (HL) -- Decrement value at address HL.
 func decHL(cpu *CPU, address uint16) {
-	value := MemRead(address)
+	value := cpu.MMU.Read(address)
 	halfCarry := value&0x0f == 0
-	MemWrite(address, value+1)
+	cpu.MMU.Write(address, value+1)
 	cpu.SetZero(value == 0)
 	cpu.SetNegative(true)
 	cpu.SetHalfCarry(halfCarry)
@@ -495,25 +495,25 @@ func addSP(cpu *CPU, n int8) {
 
 // LDD (HL),A -- Put A into memory address HL. Decrement HL.
 func lddHLA(cpu *CPU) {
-	MemWrite(cpu.Registers.HL(), cpu.Registers.A)
+	cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.A)
 	cpu.Registers.SetHL(cpu.Registers.HL() - 1)
 }
 
 // LDD A,(HL) -- Put value at address HL into A. Decrement HL.
 func lddAHL(cpu *CPU) {
-	cpu.Registers.A = MemRead(cpu.Registers.HL())
+	cpu.Registers.A = cpu.MMU.Read(cpu.Registers.HL())
 	cpu.Registers.SetHL(cpu.Registers.HL() - 1)
 }
 
 // LDI (HL),A -- Put A into memory address HL. Increment HL.
 func ldiHLA(cpu *CPU) {
-	MemWrite(cpu.Registers.HL(), cpu.Registers.A)
+	cpu.MMU.Write(cpu.Registers.HL(), cpu.Registers.A)
 	cpu.Registers.SetHL(cpu.Registers.HL() + 1)
 }
 
 // LDI A,(HL) -- Put value at address HL into A. Increment HL.
 func ldiAHL(cpu *CPU) {
-	cpu.Registers.A = MemRead(cpu.Registers.HL())
+	cpu.Registers.A = cpu.MMU.Read(cpu.Registers.HL())
 	cpu.Registers.SetHL(cpu.Registers.HL() + 1)
 }
 
@@ -537,23 +537,23 @@ func ldHLSPPlusN(cpu *CPU, n int8) {
 // LD (nn),SP -- Put Stack Pointer (SP) at address n.
 func ldNNSP(cpu *CPU) {
 	address := cpu.Fetch16()
-	MemWrite(address, byte(cpu.SP&0xff))
-	MemWrite(address+1, byte(cpu.SP>>8))
+	cpu.MMU.Write(address, byte(cpu.SP&0xff))
+	cpu.MMU.Write(address+1, byte(cpu.SP>>8))
 }
 
 // PUSH nn -- Push register pair nn onto stack.
 // Decrement Stack Pointer (SP) twice
 func pushNN(cpu *CPU, address uint16) {
-	MemWrite(cpu.SP-1, byte(uint16(address&0xff00)>>8))
-	MemWrite(cpu.SP-2, byte(address&0xff))
+	cpu.MMU.Write(cpu.SP-1, byte(uint16(address&0xff00)>>8))
+	cpu.MMU.Write(cpu.SP-2, byte(address&0xff))
 	cpu.SP -= 2
 }
 
 // POP nn --  Pop two bytes off stack into register pair nn.
 // Increment Stack Pointer (SP) twice.
 func popNN(cpu *CPU) uint16 {
-	byte1 := uint16(MemRead(cpu.SP))
-	byte2 := uint16(MemRead(cpu.SP+1)) << 8
+	byte1 := uint16(cpu.MMU.Read(cpu.SP))
+	byte2 := uint16(cpu.MMU.Read(cpu.SP+1)) << 8
 	cpu.SP += 2
 	return byte1 | byte2
 }

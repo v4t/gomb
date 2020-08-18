@@ -27,6 +27,7 @@ const (
 
 // CPU represents CPU state.
 type CPU struct {
+	MMU       *MMU
 	Registers Registers
 	Clock     Clock
 	PC        uint16
@@ -36,6 +37,7 @@ type CPU struct {
 // InitializeCPU initializes cpu values
 func InitializeCPU() *CPU {
 	cpu := &CPU{
+		MMU: InitializeMMU(),
 		Registers: Registers{
 			A: 0x11,
 			B: 0x00,
