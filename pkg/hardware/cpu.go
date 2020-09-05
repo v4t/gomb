@@ -1,13 +1,15 @@
 package hardware
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
 	"math"
+
+	"github.com/v4t/gomb/pkg/memory"
 )
 
-// Memory contains emulator memory
-var Memory = make([]byte, math.MaxUint16+1)
+// Mem contains emulator memory
+var Mem = make([]byte, math.MaxUint16+1)
 
 // Clock represents cpu timer.
 type Clock struct {
@@ -19,15 +21,19 @@ type Clock struct {
 type Flag byte
 
 const (
-	bitflagC = 0x10
-	bitflagH = 0x20
-	bitflagN = 0x40
-	bitflagZ = 0x80
+	// FlagC -- Carry flag
+	FlagC = 0x10
+	// FlagH -- Half carry flag
+	FlagH = 0x20
+	// FlagN -- Negative / subtraction flag
+	FlagN = 0x40
+	// FlagZ -- Zero flag
+	FlagZ = 0x80
 )
 
 // CPU represents CPU state.
 type CPU struct {
-	MMU       *MMU
+	MMU       *memory.MMU
 	Registers Registers
 	Clock     Clock
 	PC        uint16
@@ -35,9 +41,9 @@ type CPU struct {
 }
 
 // InitializeCPU initializes cpu values
-func InitializeCPU() *CPU {
+func InitializeCPU(mmu *memory.MMU) *CPU {
 	cpu := &CPU{
-		MMU: InitializeMMU(),
+		MMU: mmu,
 		Registers: Registers{
 			A: 0x11,
 			B: 0x00,
@@ -61,7 +67,7 @@ func (cpu *CPU) Execute() {
 	if op == 0xcb {
 		op = cpu.Fetch()
 		ExecuteCBInstruction(cpu, op)
-		fmt.Println("CB", fmt.Sprintf("%02x", op))
+		// fmt.Println("CB", fmt.Sprintf("%02x", op))
 	} else {
 		ExecuteInstruction(cpu, op)
 		// fmt.Println(fmt.Sprintf("%02x", op))
@@ -74,7 +80,7 @@ func (cpu *CPU) printDebug() {
 
 // Fetch retrieve next byte from memory.
 func (cpu *CPU) Fetch() byte {
-	op := Memory[cpu.PC]
+	op := cpu.MMU.Read(cpu.PC)
 	cpu.PC++
 	return op
 }
@@ -88,68 +94,58 @@ func (cpu *CPU) Fetch16() uint16 {
 
 // Carry retrieves carry flag.
 func (cpu *CPU) Carry() bool {
-	return cpu.Registers.F&bitflagC != 0
+	return cpu.Registers.F&FlagC != 0
 }
 
 // SetCarry sets carry flag.
 func (cpu *CPU) SetCarry(value bool) {
 	if value {
-		cpu.Registers.F |= bitflagC
+		cpu.Registers.F |= FlagC
 	} else {
-		cpu.Registers.F &^= bitflagC
+		cpu.Registers.F &^= FlagC
 	}
 }
 
 // HalfCarry retrieves half-carry flag.
 func (cpu *CPU) HalfCarry() bool {
-	return cpu.Registers.F&bitflagH != 0
+	return cpu.Registers.F&FlagH != 0
 }
 
 // SetHalfCarry sets half-carry flag.
 func (cpu *CPU) SetHalfCarry(value bool) {
 	if value {
-		cpu.Registers.F |= bitflagH
+		cpu.Registers.F |= FlagH
 	} else {
-		cpu.Registers.F &^= bitflagH
+		cpu.Registers.F &^= FlagH
 	}
 }
 
 // Negative retrieves negative/subtract flag.
 func (cpu *CPU) Negative() bool {
-	return cpu.Registers.F&bitflagN != 0
+	return cpu.Registers.F&FlagN != 0
 }
 
 // SetNegative sets negative/subtract flag.
 func (cpu *CPU) SetNegative(value bool) {
 	if value {
-		cpu.Registers.F |= bitflagN
+		cpu.Registers.F |= FlagN
 	} else {
-		cpu.Registers.F &^= bitflagN
+		cpu.Registers.F &^= FlagN
 	}
 }
 
 // Zero retrieves zero flag.
 func (cpu *CPU) Zero() bool {
-	return cpu.Registers.F&bitflagZ != 0
+	return cpu.Registers.F&FlagZ != 0
 }
 
 // SetZero sets zero flag.
 func (cpu *CPU) SetZero(value bool) {
 	if value {
-		cpu.Registers.F |= bitflagZ
+		cpu.Registers.F |= FlagZ
 	} else {
-		cpu.Registers.F &^= bitflagZ
+		cpu.Registers.F &^= FlagZ
 	}
-}
-
-// MemRead read byte from memory.
-func MemRead(address uint16) byte {
-	return Memory[address]
-}
-
-// MemWrite write byte to memory.
-func MemWrite(address uint16, value byte) {
-	Memory[address] = value
 }
 
 // EnableInterrupts enables cpu interrupts.

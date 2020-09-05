@@ -1,12 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
+	"github.com/v4t/gomb/pkg/gfx"
 	"github.com/v4t/gomb/pkg/hardware"
+	"github.com/v4t/gomb/pkg/memory"
 )
 
 func main() {
@@ -19,21 +21,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when loading ROM: %v", err)
 	}
-	if len(rom) > len(hardware.Memory) {
-		log.Fatalf("Rom doesn't fit in memory")
-	}
 
-	copy(hardware.Memory[:], rom)
-	cpu := hardware.InitializeCPU()
+	screen := &gfx.Display{}
+	screen.Run(func() {
+		screen.Init()
+		ppu := gfx.NewPPU(screen) // Covers 0xff40, 0xff44 and 0xff47
 
-	fmt.Println("STARTING")
-	for i := 0; i < 1000000; i++ {
-		fmt.Printf("PC %x\n", cpu.PC)
-		cpu.Execute()
-		if(cpu.PC > 0x237) { panic("foo")}
-	}
+		mmu := memory.MMU{PPU: ppu}
+		mmu.LoadBoot(rom)
+		ppu.Fetcher.MMU = &mmu
+		cpu := hardware.InitializeCPU(&mmu)
+		// cpu := CPU{mmu: mmu}
 
-	os.Exit(0)
+		for !screen.Closed() {
+			cpu.Execute()
+			ppu.Tick()
+		}
+		time.Sleep(3 * time.Second)
+	})
 }
 
 func loadRom(fname string) ([]byte, error) {

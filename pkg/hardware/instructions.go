@@ -314,7 +314,7 @@ func initInstructionList(cpu *CPU) {
 
 // NOP -- No operation.
 func nop() {
-	log.Printf("NOP")
+	// log.Printf("NOP")
 }
 
 // XX -- Operation not supported.

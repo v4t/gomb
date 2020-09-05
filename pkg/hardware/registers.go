@@ -2,14 +2,10 @@ package hardware
 
 // Registers represents CPU Registers.
 type Registers struct {
-	A byte
-	B byte
-	C byte
-	D byte
-	E byte
-	H byte
-	L byte
-	F byte
+	A, F byte
+	B, C byte
+	D, E byte
+	H, L byte
 }
 
 // AF returns 16-bit value of AF union register.
