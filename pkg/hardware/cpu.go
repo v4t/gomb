@@ -3,11 +3,9 @@ package hardware
 import (
 	"fmt"
 	"log"
-	"math"
-)
 
-// Memory contains emulator memory
-var Memory = make([]byte, math.MaxUint16+1)
+	"github.com/v4t/gomb/pkg/memory"
+)
 
 // Clock represents cpu timer.
 type Clock struct {
@@ -27,7 +25,7 @@ const (
 
 // CPU represents CPU state.
 type CPU struct {
-	MMU       *MMU
+	MMU       *memory.MMU
 	Registers Registers
 	Clock     Clock
 	PC        uint16
@@ -37,7 +35,7 @@ type CPU struct {
 // InitializeCPU initializes cpu values
 func InitializeCPU() *CPU {
 	cpu := &CPU{
-		MMU: InitializeMMU(),
+		MMU: memory.InitializeMMU(),
 		Registers: Registers{
 			A: 0x11,
 			B: 0x00,
@@ -74,7 +72,7 @@ func (cpu *CPU) printDebug() {
 
 // Fetch retrieve next byte from memory.
 func (cpu *CPU) Fetch() byte {
-	op := Memory[cpu.PC]
+	op := cpu.MMU.Read(cpu.PC)
 	cpu.PC++
 	return op
 }
@@ -140,16 +138,6 @@ func (cpu *CPU) SetZero(value bool) {
 	} else {
 		cpu.Registers.F &^= bitflagZ
 	}
-}
-
-// MemRead read byte from memory.
-func MemRead(address uint16) byte {
-	return Memory[address]
-}
-
-// MemWrite write byte to memory.
-func MemWrite(address uint16, value byte) {
-	Memory[address] = value
 }
 
 // EnableInterrupts enables cpu interrupts.
