@@ -7,7 +7,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/v4t/gomb/pkg/hardware"
+	"github.com/v4t/gomb/pkg/cpu"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("Rom doesn't fit in memory")
 	}
 
-	cpu := hardware.InitializeCPU()
+	cpu := cpu.InitializeCPU()
 	cpu.MMU.LoadRom(rom)
 
 	fmt.Println("STARTING")

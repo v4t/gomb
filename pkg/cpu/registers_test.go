@@ -1,4 +1,4 @@
-package hardware
+package cpu
 
 import "testing"
 

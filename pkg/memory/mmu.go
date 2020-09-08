@@ -34,6 +34,8 @@ func (mmu *MMU) Write(address uint16, value byte) {
 		return
 	} else if address == 0xff44 {
 		Memory[address] = 0
+	} else if address == 0xff46 {
+		mmu.dmaTransfer(value)
 	} else {
 		Memory[address] = value
 	}
@@ -42,4 +44,11 @@ func (mmu *MMU) Write(address uint16, value byte) {
 // LoadRom copies rom to memory.
 func (mmu *MMU) LoadRom(rom []byte) {
 	copy(Memory[:], rom)
+}
+
+func (mmu *MMU) dmaTransfer(value byte) {
+   address := uint16(value) << 8
+   for i := uint16(0); i < 0xa0; i++ {
+     mmu.Write(0xfe00+i, mmu.Read(address+i))
+   }
 }
