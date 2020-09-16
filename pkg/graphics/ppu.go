@@ -20,113 +20,74 @@ const (
 type PPU struct {
 	scanlineCounter int
 	state           PPUState
-	registers       PPURegisters
+	registers       *PPURegisters
 	Display         *Display
 	MMU             *memory.MMU
+
+	clock int
 }
 
-// Execute ppu cycle.
+// InitPPU is PPU constructor.
+func InitPPU(mmu *memory.MMU, display *Display) *PPU {
+	return &PPU{
+		MMU:       mmu,
+		Display:   display,
+		registers: InitRegisters(mmu),
+	}
+}
+
+// Execute GPU cycle.
 func (ppu *PPU) Execute(cycles int) {
-	ppu.SetPPUState()
-	if ppu.Display.IsEnabled() {
-		ppu.scanlineCounter -= cycles
-	}
-	if ppu.scanlineCounter <= 0 {
-		currentLine := memory.Memory[0xff44] + 1
-		memory.Memory[0xff44] = currentLine
+	line := ppu.registers.Scanline.Get()
+	ppu.clock += cycles
 
-		ppu.scanlineCounter = 456
-
-		if currentLine == 144 {
-			// vblank
-		} else if currentLine > 153 {
-			memory.Memory[0xff44] = 0
-		} else if currentLine < 144 {
-			ppu.DrawScanLine()
+	switch ppu.state {
+	case OAMSearch:
+		if ppu.clock >= 80 {
+			ppu.state = PixelTransfer
 		}
+	case PixelTransfer:
+		if ppu.clock >= 172 {
+			ppu.clock = 0
+			ppu.state = HBlank
+			ppu.renderScan() // Put scanline to image buffer
+		}
+		break
+	case HBlank:
+		if ppu.clock >= 204 {
+			ppu.clock = 0
+			ppu.registers.Scanline.Set(line + 1)
+
+			if line == 143 {
+				ppu.state = VBlank
+				// ppu._canvas.putImageData(ppu._scrn, 0, 0);
+				ppu.Display.RenderImage()
+			} else {
+				ppu.state = OAMSearch
+			}
+		}
+	case VBlank:
+		if ppu.clock >= 456 {
+			ppu.clock = 0
+			ppu.registers.Scanline.Set(line + 1)
+
+			if line > 153 {
+				ppu.state = OAMSearch
+				ppu.registers.Scanline.Set(0)
+			}
+		}
+		break
 	}
 }
 
-// 00: H-Blank
-// 01: V-Blank
-// 10: Searching Sprites Atts
-// 11: Transfering Data to LCD Driver
-
-// SetPPUState is
-func (ppu *PPU) SetPPUState() {
-	status := ppu.MMU.Read(0xff41)
-	if !ppu.IsLCDEnabled() {
-		// set the mode to 1 during lcd disabled and reset scanline
-		ppu.scanlineCounter = 456
-		memory.Memory[0xff44] = 0
-		status &= 252
-		status = utils.SetBit(status, 0)
-		ppu.MMU.Write(0xff41, status)
-		return
-	}
-
-	currentline := ppu.registers.Scanline.Get()
-	currentmode := status & 0x3
-
-	var mode byte = 0
-	reqInt := false
-
-	// in vblank so set mode to 1
-	if currentline >= 144 {
-		mode = 1
-		status = utils.SetBit(status, 0)
-		status = utils.ResetBit(status, 1)
-		reqInt = utils.TestBit(status, 4)
-	} else {
-		mode2bounds := 456 - 80
-		mode3bounds := mode2bounds - 172
-
-		// mode 2 -- oam search
-		if ppu.scanlineCounter >= mode2bounds {
-			mode = 2
-			status = utils.SetBit(status, 1)
-			status = utils.ResetBit(status, 0)
-			reqInt = utils.TestBit(status, 5)
-		} else if ppu.scanlineCounter >= mode3bounds {
-			// mode 3 -- pixeltransfer
-			mode = 3
-			status = utils.SetBit(status, 1)
-			status = utils.SetBit(status, 0)
-		} else {
-			// mode 0 -- h blank
-			mode = 0
-			status = utils.ResetBit(status, 1)
-			status = utils.ResetBit(status, 0)
-			reqInt = utils.TestBit(status, 3)
-		}
-	}
-
-	// just entered a new mode so request interupt
-	if reqInt && (mode != currentmode) {
-		RequestInterrupt(ppu.MMU, 1)
-	}
-
-	// check the coincidence flag
-	if currentline == ppu.MMU.Read(0xff45) {
-		status = utils.SetBit(status, 2)
-		if utils.TestBit(status, 6) {
-			RequestInterrupt(ppu.MMU, 1)
-		}
-	} else {
-		status = utils.ResetBit(status, 2)
-	}
-	ppu.MMU.Write(0xff41, status)
-}
-
-// DrawScanLine draws scanline...
-func (ppu *PPU) DrawScanLine() {
+func (ppu *PPU) renderScan() {
 	control := ppu.MMU.Read(0xff40)
-	if utils.TestBit(control, 0) {
+	if utils.TestBit(control, 0) || true {
 		ppu.RenderTiles()
 	}
-	if utils.TestBit(control, 1) {
-		ppu.RenderSprites()
-	}
+	// if utils.TestBit(control, 1) || true {
+	// 	ppu.RenderSprites()
+	// }
 }
 
 // RenderTiles doc
@@ -146,7 +107,6 @@ func (ppu *PPU) RenderTiles() {
 
 	// is the window enabled?
 	if utils.TestBit(lcdControl, 5) {
-		// is the current scanline we're drawing within the windows Y pos?,
 		if windowY <= ppu.registers.Scanline.Get() {
 			usingWindow = true
 		}
@@ -161,7 +121,7 @@ func (ppu *PPU) RenderTiles() {
 		unsigned = false
 	}
 
-	// which background mem?
+	// which background mem
 	if !usingWindow {
 		if utils.TestBit(lcdControl, 3) {
 			backgroundMemory = 0x9c00
@@ -176,7 +136,6 @@ func (ppu *PPU) RenderTiles() {
 			backgroundMemory = 0x9800
 		}
 	}
-
 	var yPos byte = 0
 
 	// yPos is used to calculate which of 32 vertical tiles the current scanline is drawing
@@ -187,7 +146,7 @@ func (ppu *PPU) RenderTiles() {
 	}
 
 	// which of the 8 vertical pixels of the current tile is the scanline on?
-	var tileRow uint16 = uint16((byte(yPos / 8)) * 32)
+	var tileRow uint16 = uint16(yPos/8) * 32
 
 	// time to start drawing the 160 horizontal pixels for this scanline
 	for pixel := byte(0); pixel < 160; pixel++ {
@@ -206,28 +165,27 @@ func (ppu *PPU) RenderTiles() {
 		var tileNum int16
 
 		// get the tile identity number. Remember it can be signed or unsigned
-		var tileAddrss uint16 = backgroundMemory + tileRow + tileCol
+		var tileAddr uint16 = backgroundMemory + tileRow + tileCol
 		if unsigned {
-			tileNum = int16(ppu.MMU.Read(tileAddrss))
+			tileNum = int16(ppu.MMU.Read(tileAddr))
 		} else {
-			tileNum = int16(int8(ppu.MMU.Read(tileAddrss)))
+			tileNum = int16(int8(ppu.MMU.Read(tileAddr)))
 		}
-
 		// deduce where this tile identifier is in memory
 		var tileLocation uint16 = tileData
-
 		if unsigned {
-			tileLocation += uint16(tileNum * 16)
+			tileLocation += uint16(tileNum*16)
 		} else {
 			tileLocation += uint16((tileNum + 128) * 16)
 		}
 
 		// find the correct vertical line we're on of the
 		// tile to get the tile data from memory
-		var line uint16 = uint16(yPos % 8)
+		var line byte = yPos % 8
 		line *= 2 // each vertical line takes up two bytes of memory
-		data1 := ppu.MMU.Read(tileLocation + line)
-		data2 := ppu.MMU.Read(tileLocation + line + 1)
+
+		data1 := ppu.MMU.Read(tileLocation + uint16(line))
+		data2 := ppu.MMU.Read(tileLocation + uint16(line) + 1)
 
 		// pixel 0 in the tile is it 7 of data 1 and data2.
 		// Pixel 1 is bit 6 etc..
@@ -235,8 +193,7 @@ func (ppu *PPU) RenderTiles() {
 		colourBit -= 7
 		colourBit *= -1
 
-		// combine data 2 and data 1 to get the colour id for this pixel
-		// in the tile
+		// combine data 2 and data 1 to get the colour id for this pixel in the tile
 		var colourNum int = utils.GetBit(data2, colourBit)
 		colourNum <<= 1
 		colourNum |= utils.GetBit(data1, colourBit)
@@ -246,75 +203,9 @@ func (ppu *PPU) RenderTiles() {
 	}
 }
 
-// RenderSprites doc
-func (ppu *PPU) RenderSprites() {
-	lcdControl := ppu.registers.LcdControl.Get()
-	use8x16 := false
-	if utils.TestBit(lcdControl, 2) {
-		use8x16 = true
-	}
-
-	for sprite := byte(0); sprite < 40; sprite++ {
-		// sprite occupies 4 bytes in the sprite attributes table
-		var index uint16 = uint16(sprite) * 4
-		var yPos byte = ppu.MMU.Read(0xfe00+index) - 16
-		var xPos byte = ppu.MMU.Read(0xfe00+index+1) - 8
-		var tileLocation byte = ppu.MMU.Read(0xfe00 + index + 2)
-		var attributes byte = ppu.MMU.Read(0xfe00 + index + 3)
-
-		yFlip := utils.TestBit(attributes, 6)
-		xFlip := utils.TestBit(attributes, 5)
-
-		scanline := ppu.registers.Scanline.Get()
-
-		ysize := byte(8)
-		if use8x16 {
-			ysize = 16
-		}
-
-		// does this sprite intercept with the scanline?
-		if (scanline >= yPos) && (scanline < (yPos + ysize)) {
-			line := int16(scanline - yPos)
-
-			// read the sprite in backwards in the y axis
-			if yFlip {
-				line -= int16(ysize)
-				line *= -1
-			}
-
-			line *= 2 // same as for tiles
-			var dataAddress uint16 = (0x8000 + uint16(tileLocation*16)) + uint16(line)
-			data1 := ppu.MMU.Read(dataAddress)
-			data2 := ppu.MMU.Read(dataAddress + 1)
-
-			// its easier to read in from right to left as pixel 0 is
-			// bit 7 in the colour data, pixel 1 is bit 6 etc...
-			for tilePixel := 7; tilePixel >= 0; tilePixel-- {
-				colourbit := tilePixel
-				// read the sprite in backwards for the x axis
-				if xFlip {
-					colourbit -= 7
-					colourbit *= -1
-				}
-
-				// the rest is the same as for tiles
-				colourNum := utils.GetBit(data2, colourbit)
-				colourNum <<= 1
-				colourNum |= utils.GetBit(data1, colourbit)
-
-				xPix := 0 - tilePixel
-				xPix += 7
-
-				pixel := xPos + byte(xPix)
-				ppu.Display.Draw(pixel, scanline, byte(colourNum))
-			}
-		}
-	}
-}
-
 // IsLCDEnabled doc
 func (ppu *PPU) IsLCDEnabled() bool {
-	return utils.TestBit(memory.Memory[0xff40], 7)
+	return utils.TestBit(ppu.MMU.Memory[0xff40], 7)
 }
 
 // RequestInterrupt doc

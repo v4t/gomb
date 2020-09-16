@@ -2,7 +2,6 @@ package graphics
 
 import (
 	"image/color"
-	"log"
 	"math"
 
 	"github.com/faiface/pixel"
@@ -95,13 +94,13 @@ func (display *Display) Disable() {
 }
 
 // Draw adds pixel to display buffer.
-func (display *Display) Draw(x byte, y byte, colorId byte) {
+func (display *Display) Draw(x byte, y byte, colorID byte) {
 	if (x < 0 || x >= ScreenWidth) || (y < 0 || y >= ScreenHeight) {
-		log.Println("Invalid x or y:", x, y)
+		return
 	}
 	if display.enabled {
 
-		color := display.Palette[colorId]
+		color := display.Palette[colorID]
 		display.pixelBuffer[x][y][0] = color.R
 		display.pixelBuffer[x][y][1] = color.G
 		display.pixelBuffer[x][y][2] = color.B

@@ -1,8 +1,6 @@
 package cpu
 
 import (
-	"log"
-
 	"github.com/v4t/gomb/pkg/memory"
 )
 
@@ -143,10 +141,10 @@ func (cpu *CPU) SetZero(value bool) {
 
 // EnableInterrupts enables cpu interrupts.
 func EnableInterrupts() {
-	log.Println("Enable interrupts")
+	// log.Println("Enable interrupts")
 }
 
 // DisableInterrupts disables cpu interrupts.
 func DisableInterrupts() {
-	log.Println("Enable interrupts")
+	// log.Println("Disable interrupts")
 }

@@ -18,7 +18,7 @@ type Gameboy struct {
 func Create() *Gameboy {
 	display := graphics.Init()
 	cpu := cpu.InitializeCPU()
-	ppu := &graphics.PPU{MMU: cpu.MMU, Display: display}
+	ppu := graphics.InitPPU(cpu.MMU, display)
 	return &Gameboy{
 		CPU:     cpu,
 		PPU:     ppu,
