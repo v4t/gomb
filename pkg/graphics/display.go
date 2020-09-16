@@ -26,10 +26,10 @@ const (
 
 // Display represents gameboy display.
 type Display struct {
+	Palette     [4]color.RGBA
 	window      *pixelgl.Window
 	image       *pixel.PictureData
 	enabled     bool
-	Palette     [4]color.RGBA
 	pixelBuffer [ScreenWidth][ScreenHeight][4]uint8
 	offset      int
 }
@@ -45,6 +45,7 @@ func (display *Display) Init() {
 		panic(err)
 	}
 
+	display.enabled = true
 	display.Palette = DefaultPalette
 
 	win.Clear(colornames.Black)
@@ -62,12 +63,20 @@ func (display *Display) Init() {
 	win.Update()
 }
 
+// Run pixel application.
+func (display *Display) Run(f func()) {
+	pixelgl.Run(f)
+}
+
 // Init initializes new display.
 func Init() *Display {
 	display := &Display{}
-	display.enabled = true
-	display.Palette = DefaultPalette
 	return display
+}
+
+// Closed returns true if application is closed.
+func (display *Display) Closed() bool {
+	return display.window.Closed()
 }
 
 // IsEnabled boolean flag.
@@ -86,12 +95,13 @@ func (display *Display) Disable() {
 }
 
 // Draw adds pixel to display buffer.
-func (display *Display) Draw(x byte, y byte, colorIndex byte) {
+func (display *Display) Draw(x byte, y byte, colorId byte) {
 	if (x < 0 || x >= ScreenWidth) || (y < 0 || y >= ScreenHeight) {
 		log.Println("Invalid x or y:", x, y)
 	}
 	if display.enabled {
-		color := display.Palette[colorIndex]
+
+		color := display.Palette[colorId]
 		display.pixelBuffer[x][y][0] = color.R
 		display.pixelBuffer[x][y][1] = color.G
 		display.pixelBuffer[x][y][2] = color.B
@@ -103,9 +113,9 @@ func (display *Display) Draw(x byte, y byte, colorIndex byte) {
 func (display *Display) RenderImage() {
 	// display.image.Pix = display.imgBuffer
 	img := make([]color.RGBA, ScreenWidth*ScreenHeight)
-	for x := 0; x < ScreenWidth; x++ {
-		for y := 0; y < ScreenHeight; y++ {
-			index := ScreenWidth * x + y
+	for y := 0; y < ScreenHeight; y++ {
+		for x := 0; x < ScreenWidth; x++ {
+			index := ScreenWidth*y + x
 			img[index] = color.RGBA{
 				display.pixelBuffer[x][y][0],
 				display.pixelBuffer[x][y][1],
@@ -113,7 +123,6 @@ func (display *Display) RenderImage() {
 				display.pixelBuffer[x][y][3]}
 		}
 	}
-
 	display.image.Pix = img
 	bg := color.RGBA{R: 202, G: 220, B: 159, A: 0xff}
 	display.window.Clear(bg)

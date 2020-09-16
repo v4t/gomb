@@ -1,7 +1,6 @@
 package cpu
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/v4t/gomb/pkg/memory"
@@ -54,16 +53,18 @@ func InitializeCPU() *CPU {
 }
 
 // Execute next CPU cycle.
-func (cpu *CPU) Execute() {
+func (cpu *CPU) Execute() int {
 	op := cpu.Fetch()
+	cycles := 0
 	if op == 0xcb {
 		op = cpu.Fetch()
-		ExecuteCBInstruction(cpu, op)
-		fmt.Println("CB", fmt.Sprintf("%02x", op))
+		cycles = ExecuteCBInstruction(cpu, op)
+		// fmt.Println("CB", fmt.Sprintf("%02x", op))
 	} else {
-		ExecuteInstruction(cpu, op)
+		cycles = ExecuteInstruction(cpu, op)
 		// fmt.Println(fmt.Sprintf("%02x", op))
 	}
+	return cycles
 }
 
 func (cpu *CPU) printDebug() {

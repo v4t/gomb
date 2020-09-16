@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
 	"os"
 
-	"github.com/v4t/gomb/pkg/cpu"
+	"github.com/v4t/gomb/pkg/emulator"
 )
 
 func main() {
@@ -24,17 +23,8 @@ func main() {
 		log.Fatalf("Rom doesn't fit in memory")
 	}
 
-	cpu := cpu.InitializeCPU()
-	cpu.MMU.LoadRom(rom)
-
-	fmt.Println("STARTING")
-	for i := 0; i < 1000000; i++ {
-		fmt.Printf("PC %x\n", cpu.PC)
-		cpu.Execute()
-		if cpu.PC > 0x237 {
-			panic("foo")
-		}
-	}
+	gb := emulator.Create()
+	gb.Start(rom)
 
 	os.Exit(0)
 }
