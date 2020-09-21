@@ -114,7 +114,7 @@ func (display *Display) RenderImage() {
 	img := make([]color.RGBA, ScreenWidth*ScreenHeight)
 	for y := 0; y < ScreenHeight; y++ {
 		for x := 0; x < ScreenWidth; x++ {
-			index := ScreenWidth*y + x
+			index := (ScreenHeight-1-y)*ScreenWidth + x
 			img[index] = color.RGBA{
 				display.pixelBuffer[x][y][0],
 				display.pixelBuffer[x][y][1],

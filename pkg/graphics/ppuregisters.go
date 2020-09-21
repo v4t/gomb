@@ -4,25 +4,29 @@ import "github.com/v4t/gomb/pkg/memory"
 
 // PPURegisters contains available ppu registers.
 type PPURegisters struct {
-	LcdControl PPURegister
-	ScrollX    PPURegister
-	ScrollY    PPURegister
-	Scanline   PPURegister
-	BgPalette  PPURegister
-	WindowX    PPURegister
-	WindowY    PPURegister
+	LcdControl  PPURegister
+	ScrollX     PPURegister
+	ScrollY     PPURegister
+	Scanline    PPURegister
+	BgPalette   PPURegister
+	ObjPalette1 PPURegister
+	ObjPalette2 PPURegister
+	WindowX     PPURegister
+	WindowY     PPURegister
 }
 
 // InitRegisters is constructor for PPURegisters.
 func InitRegisters(mmu *memory.MMU) *PPURegisters {
 	return &PPURegisters{
-		LcdControl: PPURegister{mmu: mmu, address: 0xff40},
-		ScrollY:    PPURegister{mmu: mmu, address: 0xff42},
-		ScrollX:    PPURegister{mmu: mmu, address: 0xff43},
-		Scanline:   PPURegister{mmu: mmu, address: 0xff44},
-		BgPalette:  PPURegister{mmu: mmu, address: 0xff47},
-		WindowX:    PPURegister{mmu: mmu, address: 0xff4a},
-		WindowY:    PPURegister{mmu: mmu, address: 0xff4b},
+		LcdControl:  PPURegister{mmu: mmu, address: 0xff40},
+		ScrollY:     PPURegister{mmu: mmu, address: 0xff42},
+		ScrollX:     PPURegister{mmu: mmu, address: 0xff43},
+		Scanline:    PPURegister{mmu: mmu, address: 0xff44},
+		BgPalette:   PPURegister{mmu: mmu, address: 0xff47},
+		ObjPalette1: PPURegister{mmu: mmu, address: 0xff48},
+		ObjPalette2: PPURegister{mmu: mmu, address: 0xff49},
+		WindowX:     PPURegister{mmu: mmu, address: 0xff4a},
+		WindowY:     PPURegister{mmu: mmu, address: 0xff4b},
 	}
 }
 

@@ -314,7 +314,7 @@ func initInstructionList(cpu *CPU) {
 
 // NOP -- No operation.
 func nop() {
-	log.Printf("NOP")
+	// log.Printf("NOP")
 }
 
 // XX -- Operation not supported.
@@ -674,12 +674,12 @@ func scf(cpu *CPU) {
 
 // HALT -- Power down CPU until an interrupt occurs.
 func halt(cpu *CPU) {
-	log.Fatalln("TODO: HALT")
+	// log.Println("TODO: HALT")
 }
 
 // STOP -- Halt CPU & LCD display until button pressed.
 func stop(cpu *CPU) {
-	log.Fatalln("TODO: STOP")
+	// log.Println("TODO: STOP")
 }
 
 /* Jumps */
