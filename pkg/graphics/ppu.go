@@ -60,7 +60,7 @@ func (ppu *PPU) Execute(cycles int) {
 
 			if line == 143 {
 				ppu.state = VBlank
-				// ppu._canvas.putImageData(ppu._scrn, 0, 0);
+				// ppu._canvas.putImageData(ppu._scrn, 0, 0)
 				ppu.Display.RenderImage()
 			} else {
 				ppu.state = OAMSearch
@@ -80,48 +80,54 @@ func (ppu *PPU) Execute(cycles int) {
 	}
 }
 
+func (ppu *PPU) setState(state PPUState) {
+	switch state {
+	case HBlank:
+	case VBlank:
+	case OAMSearch:
+	case PixelTransfer:
+
+	}
+}
+
 func (ppu *PPU) renderScan() {
 	control := ppu.MMU.Read(0xff40)
 	if utils.TestBit(control, 0) || true {
-		ppu.RenderTiles()
+		ppu.renderTiles()
 	}
-	// if utils.TestBit(control, 1) || true {
-	// 	ppu.RenderSprites()
-	// }
+	if utils.TestBit(control, 1) || true {
+		ppu.renderSprites()
+	}
 }
 
-// RenderTiles doc
-func (ppu *PPU) RenderTiles() {
+func (ppu *PPU) renderTiles() {
+	// Settings for tile rendering
 	var tileData uint16 = 0
 	var backgroundMemory uint16 = 0
 	var unsigned bool = true
+	var usingWindow bool = false
 
-	// where to draw the visual area and the window
+	// Current register values
 	scrollY := ppu.registers.ScrollY.Get()
 	scrollX := ppu.registers.ScrollX.Get()
 	windowY := ppu.registers.WindowY.Get()
 	windowX := ppu.registers.WindowX.Get() - 7
 	lcdControl := ppu.registers.LcdControl.Get()
 
-	var usingWindow bool = false
-
-	// is the window enabled?
+	// Set tile rendering settings
 	if utils.TestBit(lcdControl, 5) {
 		if windowY <= ppu.registers.Scanline.Get() {
 			usingWindow = true
 		}
 	}
-
-	// which tile data are we using?
 	if utils.TestBit(lcdControl, 4) {
 		tileData = 0x8000
 	} else {
-		// IMPORTANT: This memory region uses signed bytes as tile identifiers
 		tileData = 0x8800
 		unsigned = false
 	}
-
 	// which background mem
+
 	if !usingWindow {
 		if utils.TestBit(lcdControl, 3) {
 			backgroundMemory = 0x9c00
@@ -136,81 +142,98 @@ func (ppu *PPU) RenderTiles() {
 			backgroundMemory = 0x9800
 		}
 	}
-	var yPos byte = 0
 
-	// yPos is used to calculate which of 32 vertical tiles the current scanline is drawing
+	// yPos represents the current vertical line
+	var yPos byte = 0
 	if !usingWindow {
 		yPos = scrollY + ppu.registers.Scanline.Get()
 	} else {
 		yPos = ppu.registers.Scanline.Get() - windowY
 	}
 
-	// which of the 8 vertical pixels of the current tile is the scanline on?
+	// Current position of scanline on tile
 	var tileRow uint16 = uint16(yPos/8) * 32
 
-	// time to start drawing the 160 horizontal pixels for this scanline
+	// Draw horizontal pixels for scanline
 	for pixel := byte(0); pixel < 160; pixel++ {
+		xPos := pixel + scrollX
 
-		var xPos byte = pixel + scrollX
-
-		// translate the current x pos to window space if necessary
-		if usingWindow {
-			if pixel >= windowX {
-				xPos = pixel - windowX
-			}
+		// Translate current x to window space
+		if usingWindow && pixel >= windowX {
+			xPos = pixel - windowX
 		}
 
-		// which of the 32 horizontal tiles does this xPos fall within?
-		var tileCol uint16 = uint16(xPos / 8)
-		var tileNum int16
-
-		// get the tile identity number. Remember it can be signed or unsigned
-		var tileAddr uint16 = backgroundMemory + tileRow + tileCol
+		// Get tile location
+		tileAddr := backgroundMemory + tileRow + uint16(xPos/8)
+		tileLocation := tileData
 		if unsigned {
-			tileNum = int16(ppu.MMU.Read(tileAddr))
+			tileNum := int16(ppu.MMU.Read(tileAddr))
+			tileLocation += uint16(tileNum * 16)
 		} else {
-			tileNum = int16(int8(ppu.MMU.Read(tileAddr)))
-		}
-		// deduce where this tile identifier is in memory
-		var tileLocation uint16 = tileData
-		if unsigned {
-			tileLocation += uint16(tileNum*16)
-		} else {
+			tileNum := int16(int8(ppu.MMU.Read(tileAddr)))
 			tileLocation += uint16((tileNum + 128) * 16)
 		}
 
-		// find the correct vertical line we're on of the
-		// tile to get the tile data from memory
-		var line byte = yPos % 8
-		line *= 2 // each vertical line takes up two bytes of memory
-
+		// Fetch tile data
+		var line byte = (yPos % 8) * 2
 		data1 := ppu.MMU.Read(tileLocation + uint16(line))
 		data2 := ppu.MMU.Read(tileLocation + uint16(line) + 1)
 
-		// pixel 0 in the tile is it 7 of data 1 and data2.
-		// Pixel 1 is bit 6 etc..
-		var colourBit int = int(xPos) % 8
-		colourBit -= 7
-		colourBit *= -1
-
-		// combine data 2 and data 1 to get the colour id for this pixel in the tile
-		var colourNum int = utils.GetBit(data2, colourBit)
-		colourNum <<= 1
-		colourNum |= utils.GetBit(data1, colourBit)
-
-		finaly := ppu.registers.Scanline.Get()
-		ppu.Display.Draw(pixel, finaly, byte(colourNum))
+		// Push pixel to frame buffer
+		var colourBit int = ((int(xPos) % 8) - 7) * -1
+		var colourNum int = (utils.GetBit(data2, colourBit) << 1) | utils.GetBit(data1, colourBit)
+		ppu.Display.Draw(pixel, ppu.registers.Scanline.Get(), byte(colourNum))
 	}
 }
 
-// IsLCDEnabled doc
-func (ppu *PPU) IsLCDEnabled() bool {
-	return utils.TestBit(ppu.MMU.Memory[0xff40], 7)
-}
+func (ppu *PPU) renderSprites() {
+	lcdControl := ppu.registers.LcdControl.Get()
+	scanline := int(ppu.registers.Scanline.Get())
 
-// RequestInterrupt doc
-func RequestInterrupt(mmu *memory.MMU, bit int) {
-	requestFlag := mmu.Read(0xff0f)
-	requestFlag = utils.SetBit(requestFlag, bit)
-	mmu.Write(0xff0f, requestFlag)
+	ysize := 8
+	if utils.TestBit(lcdControl, 2) {
+		ysize = 16
+	}
+
+	for sprite := 0; sprite < 40; sprite++ {
+		// Get sprite information
+		index := uint16(sprite * 4)
+		yPos := int(ppu.MMU.Read(0xfe00+index) - 16)
+		xPos := int(ppu.MMU.Read(0xfe00+index+1) - 8)
+		tileLocation := uint16(ppu.MMU.Read(0xfe00 + index + 2))
+		attributes := ppu.MMU.Read(0xfe00 + index + 3)
+
+		yFlip := utils.TestBit(attributes, 6)
+		xFlip := utils.TestBit(attributes, 5)
+
+		if scanline < yPos || scanline >= (yPos+ysize) {
+			continue
+		}
+
+		// Set sprite line
+		line := scanline - yPos
+		if yFlip {
+			line -= ysize
+			line *= -1
+		}
+
+		dataAddress := (0x8000 + (tileLocation * 16)) + uint16(line*2)
+		data1 := ppu.MMU.Read(dataAddress)
+		data2 := ppu.MMU.Read(dataAddress + 1)
+
+		// Draw one line of sprite
+		for tilePixel := 7; tilePixel >= 0; tilePixel-- {
+			colourbit := tilePixel
+			if xFlip {
+				colourbit -= 7
+				colourbit *= -1
+			}
+			colourNum := (utils.GetBit(data2, colourbit) << 1) | utils.GetBit(data1, colourbit)
+			if colourNum == 0 {
+				continue
+			}
+			pixel := xPos + (7 - tilePixel)
+			ppu.Display.Draw(byte(pixel), byte(scanline), byte(colourNum))
+		}
+	}
 }
