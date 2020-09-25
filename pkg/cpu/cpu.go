@@ -27,6 +27,11 @@ type CPU struct {
 	Clock     Clock
 	PC        uint16
 	SP        uint16
+	Halted    bool
+	Stopped   bool
+
+	enablingInterrupts  bool
+	disablingInterrupts bool
 }
 
 // InitializeCPU initializes cpu values
@@ -52,6 +57,8 @@ func InitializeCPU() *CPU {
 
 // Execute next CPU cycle.
 func (cpu *CPU) Execute() int {
+	enableIrq := cpu.enablingInterrupts
+	disableIrq := cpu.disablingInterrupts
 	op := cpu.Fetch()
 	cycles := 0
 	if op == 0xcb {
@@ -62,11 +69,15 @@ func (cpu *CPU) Execute() int {
 		cycles = ExecuteInstruction(cpu, op)
 		// fmt.Println(fmt.Sprintf("%02x", op))
 	}
+	if enableIrq {
+		EnableInterrupts(cpu.MMU)
+		cpu.enablingInterrupts = false
+	}
+	if disableIrq {
+		DisableInterrupts(cpu.MMU)
+		cpu.disablingInterrupts = false
+	}
 	return cycles
-}
-
-func (cpu *CPU) printDebug() {
-
 }
 
 // Fetch retrieve next byte from memory.
@@ -139,12 +150,8 @@ func (cpu *CPU) SetZero(value bool) {
 	}
 }
 
-// EnableInterrupts enables cpu interrupts.
-func EnableInterrupts() {
-	// log.Println("Enable interrupts")
-}
-
-// DisableInterrupts disables cpu interrupts.
-func DisableInterrupts() {
-	// log.Println("Disable interrupts")
+func (cpu *CPU) pushPC() {
+	cpu.MMU.Write(cpu.SP-1, byte(uint16(cpu.PC&0xff00)>>8))
+	cpu.MMU.Write(cpu.SP-2, byte(cpu.PC&0xff))
+	cpu.SP -= 2
 }

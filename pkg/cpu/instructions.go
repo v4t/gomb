@@ -297,7 +297,7 @@ func initInstructionList(cpu *CPU) {
 	instructions[0xf0] = func() { cpu.Registers.A = cpu.MMU.Read(0xff00 + uint16(cpu.Fetch())) }     // LDH A,(n)
 	instructions[0xf1] = func() { cpu.Registers.SetAF(popNN(cpu)) }                                  // POP AF
 	instructions[0xf2] = func() { cpu.Registers.A = cpu.MMU.Read(0xff00 + uint16(cpu.Registers.C)) } // LD A,(C)
-	instructions[0xf3] = func() { DisableInterrupts() }                                              // DI
+	instructions[0xf3] = func() { cpu.disablingInterrupts = true }                                   // DI
 	instructions[0xf4] = xx                                                                          // XX
 	instructions[0xf5] = func() { pushNN(cpu, cpu.Registers.AF()) }                                  // PUSH AF
 	instructions[0xf6] = func() { or(cpu, cpu.Fetch()) }                                             // OR #
@@ -305,7 +305,7 @@ func initInstructionList(cpu *CPU) {
 	instructions[0xf8] = func() { ldHLSPPlusN(cpu, int8(cpu.Fetch())) }                              // LD HL,SP+n
 	instructions[0xf9] = func() { cpu.SP = cpu.Registers.HL() }                                      // LD SP,HL
 	instructions[0xfa] = func() { cpu.Registers.A = cpu.MMU.Read(cpu.Fetch16()) }                    // LD A,(nn)
-	instructions[0xfb] = func() { EnableInterrupts() }                                               // EI
+	instructions[0xfb] = func() { cpu.enablingInterrupts = true }                                    // EI
 	instructions[0xfc] = xx                                                                          // XX
 	instructions[0xfd] = xx                                                                          // XX
 	instructions[0xfe] = func() { cp(cpu, cpu.Fetch()) }                                             // CP #
@@ -674,12 +674,12 @@ func scf(cpu *CPU) {
 
 // HALT -- Power down CPU until an interrupt occurs.
 func halt(cpu *CPU) {
-	// log.Println("TODO: HALT")
+	cpu.Halted = true
 }
 
 // STOP -- Halt CPU & LCD display until button pressed.
 func stop(cpu *CPU) {
-	// log.Println("TODO: STOP")
+	cpu.Stopped = true
 }
 
 /* Jumps */
@@ -741,5 +741,5 @@ func retCC(cpu *CPU, condition bool) {
 // RETI -- Pop two bytes from stack & jump to that address then enable interrupts.
 func reti(cpu *CPU) {
 	cpu.PC = popNN(cpu)
-	EnableInterrupts()
+	EnableInterrupts(cpu.MMU)
 }
