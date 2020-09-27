@@ -25,46 +25,57 @@ var irqAddresses = []uint16{
 	Joypad:  0x60,
 }
 
+// IMEFlag is Interrupt master enable flag.
+var IMEFlag bool
+
 // EnableInterrupts enables cpu interrupts.
-func EnableInterrupts(mmu *memory.MMU) {
-	mmu.Write(0xffff, 255)
+func EnableInterrupts(cpu *CPU) {
+	IMEFlag = true
 }
 
 // DisableInterrupts disables cpu interrupts.
-func DisableInterrupts(mmu *memory.MMU) {
-	mmu.Write(0xffff, 0)
+func DisableInterrupts(cpu *CPU) {
+	IMEFlag = false
 }
 
 // SetInterrupt sets given interrupt flag.
-func SetInterrupt(interrupt Interrupt, mmu *memory.MMU) {
+func SetInterrupt(interrupt Interrupt, cpu *CPU) {
+	register := cpu.MMU.Read(0xff0f)
+	register = utils.SetBit(register, interrupt)
+	cpu.MMU.Write(0xff0f, register)
+}
+
+func SetPPUInterrupt(interrupt Interrupt, mmu *memory.MMU) {
 	register := mmu.Read(0xff0f)
 	register = utils.SetBit(register, interrupt)
 	mmu.Write(0xff0f, register)
 }
 
 // HandleInterrupts processes raised interrupts accordingly.
-func HandleInterrupts(mmu *memory.MMU) {
-	flags := mmu.Read(0xff0f)
+func HandleInterrupts(cpu *CPU) {
+	if !IMEFlag {
+		return
+	}
+	flags := cpu.MMU.Read(0xff0f)
 	if flags == 0 {
 		return
 	}
-	enabled := mmu.Read(0xffff)
+	enabled := cpu.MMU.Read(0xffff)
 	for f := 0; f < 5; f++ {
 		if utils.TestBit(enabled, f) && utils.TestBit(flags, f) {
-			// resolveInterrupt(f)
+			resolveInterrupt(f, cpu)
 		}
 	}
 }
 
 func resolveInterrupt(interrupt int, cpu *CPU) {
 	// Skip processing interrupts if cpu is halted without interrupts.
-	interruptsOn := cpu.MMU.Read(0xffff) != 0
-	if !interruptsOn && cpu.Halted {
+	if !IMEFlag && cpu.Halted {
 		cpu.Halted = false
 		return
 	}
 
-	DisableInterrupts(cpu.MMU)
+	DisableInterrupts(cpu)
 	cpu.Halted = false
 
 	// Reset interrupt

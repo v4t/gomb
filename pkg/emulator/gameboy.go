@@ -48,41 +48,8 @@ func (gb *Gameboy) Update() {
 		cycles := gb.CPU.Execute()
 		currentCycles += cycles
 		gb.PPU.Execute(cycles)
+		cpu.HandleInterrupts(gb.CPU)
 	}
 	gb.Display.RenderImage()
 }
 
-// func (gb *Gameboy) UpdateTimers(cycles int) {
-// 	//    DoDividerRegister(cycles);
-
-// 	// the clock must be enabled to update the clock
-// 	if IsClockEnabled() {
-// 		m_TimerCounter -= cycles
-
-// 		// enough cpu clock cycles have happened to update the timer
-// 		if m_TimerCounter <= 0 {
-// 			// reset m_TimerTracer to the correct value
-// 			SetClockFreq()
-
-// 			// timer about to overflow
-// 			if ReadMemory(TIMA) == 255 {
-// 				WriteMemory(TIMA, ReadMemory(TMA))
-// 				RequestInterupt(2)
-// 			} else {
-// 				WriteMemory(TIMA, ReadMemory(TIMA)+1)
-// 			}
-// 		}
-// 	}
-// }
-
-// func (gb *Gameboy) DoDividerRegister(cycles int) {
-// 	m_DividerRegister += cycles
-// 	if m_DividerCounter >= 255 {
-// 		m_DividerCounter = 0
-// 		m_Rom[0xFF04]++
-// 	}
-// }
-
-// func (gb *Gameboy) IsClockEnabled() bool {
-// 	return utils.TestBit(gb.MMU.Read(TMC), 2)
-// }

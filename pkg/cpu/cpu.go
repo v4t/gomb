@@ -64,17 +64,17 @@ func (cpu *CPU) Execute() int {
 	if op == 0xcb {
 		op = cpu.Fetch()
 		cycles = ExecuteCBInstruction(cpu, op)
-		// fmt.Println("CB", fmt.Sprintf("%02x", op))
+		// fmt.Println("CB", fmt.Sprintf("PC:%04x OP: %04x", cpu.PC, op))
 	} else {
 		cycles = ExecuteInstruction(cpu, op)
-		// fmt.Println(fmt.Sprintf("%02x", op))
+		// fmt.Println(fmt.Sprintf("PC:%04x OP: %02x", cpu.PC, op))
 	}
 	if enableIrq {
-		EnableInterrupts(cpu.MMU)
+		EnableInterrupts(cpu)
 		cpu.enablingInterrupts = false
 	}
 	if disableIrq {
-		DisableInterrupts(cpu.MMU)
+		DisableInterrupts(cpu)
 		cpu.disablingInterrupts = false
 	}
 	return cycles

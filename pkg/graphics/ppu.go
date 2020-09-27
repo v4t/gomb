@@ -1,6 +1,7 @@
 package graphics
 
 import (
+	"github.com/v4t/gomb/pkg/cpu"
 	"github.com/v4t/gomb/pkg/memory"
 	"github.com/v4t/gomb/pkg/utils"
 )
@@ -41,6 +42,8 @@ func (ppu *PPU) Execute(cycles int) {
 	line := ppu.registers.Scanline.Get()
 	ppu.clock += cycles
 
+	oldState := ppu.state
+
 	switch ppu.state {
 	case OAMSearch:
 		if ppu.clock >= 80 {
@@ -60,7 +63,6 @@ func (ppu *PPU) Execute(cycles int) {
 
 			if line == 143 {
 				ppu.state = VBlank
-				// ppu._canvas.putImageData(ppu._scrn, 0, 0)
 				ppu.Display.RenderImage()
 			} else {
 				ppu.state = OAMSearch
@@ -77,6 +79,23 @@ func (ppu *PPU) Execute(cycles int) {
 			}
 		}
 		break
+	}
+
+	// Handle lcd state change
+	if oldState != ppu.state {
+		cpu.SetPPUInterrupt(1, ppu.MMU)
+	}
+
+	// Check coincidence interrupt flag
+	status := ppu.MMU.Read(0xff41)
+	if line == ppu.MMU.Read(0xff45) {
+		status = utils.SetBit(status, 2)
+		if utils.TestBit(status, 6) {
+			cpu.SetPPUInterrupt(1, ppu.MMU)
+		} else {
+			status = utils.ResetBit(status, 2)
+		}
+		ppu.MMU.Write(0xff41, status)
 	}
 }
 
@@ -126,8 +145,6 @@ func (ppu *PPU) renderTiles() {
 		tileData = 0x8800
 		unsigned = false
 	}
-	// which background mem
-
 	if !usingWindow {
 		if utils.TestBit(lcdControl, 3) {
 			backgroundMemory = 0x9c00
@@ -135,7 +152,6 @@ func (ppu *PPU) renderTiles() {
 			backgroundMemory = 0x9800
 		}
 	} else {
-		// which window memory?
 		if utils.TestBit(lcdControl, 6) {
 			backgroundMemory = 0x9c00
 		} else {

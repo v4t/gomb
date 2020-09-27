@@ -5,6 +5,7 @@ import "github.com/v4t/gomb/pkg/memory"
 // PPURegisters contains available ppu registers.
 type PPURegisters struct {
 	LcdControl  PPURegister
+	LcdStatus   PPURegister
 	ScrollX     PPURegister
 	ScrollY     PPURegister
 	Scanline    PPURegister
@@ -17,8 +18,11 @@ type PPURegisters struct {
 
 // InitRegisters is constructor for PPURegisters.
 func InitRegisters(mmu *memory.MMU) *PPURegisters {
+	mmu.Memory[0xff40] = 0x91
+	mmu.Memory[0xff41] = 0x85
 	return &PPURegisters{
 		LcdControl:  PPURegister{mmu: mmu, address: 0xff40},
+		LcdStatus:   PPURegister{mmu: mmu, address: 0xff41},
 		ScrollY:     PPURegister{mmu: mmu, address: 0xff42},
 		ScrollX:     PPURegister{mmu: mmu, address: 0xff43},
 		Scanline:    PPURegister{mmu: mmu, address: 0xff44},

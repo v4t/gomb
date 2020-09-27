@@ -392,7 +392,7 @@ func adc(cpu *CPU, n byte) {
 
 // SUB n -- Subtract n from A.
 func sub(cpu *CPU, n byte) {
-	diff := int16(cpu.Registers.A) + int16(n)
+	diff := int16(cpu.Registers.A) - int16(n)
 	halfCarry := ((cpu.Registers.A & 0xf) - (n & 0xf)) < 0
 	cpu.Registers.A = byte(diff)
 
@@ -741,5 +741,5 @@ func retCC(cpu *CPU, condition bool) {
 // RETI -- Pop two bytes from stack & jump to that address then enable interrupts.
 func reti(cpu *CPU) {
 	cpu.PC = popNN(cpu)
-	EnableInterrupts(cpu.MMU)
+	EnableInterrupts(cpu)
 }
