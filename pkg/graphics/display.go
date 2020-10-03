@@ -1,6 +1,7 @@
 package graphics
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
@@ -99,7 +100,6 @@ func (display *Display) Draw(x byte, y byte, colorID byte) {
 		return
 	}
 	if display.enabled {
-
 		color := display.Palette[colorID]
 		display.pixelBuffer[x][y][0] = color.R
 		display.pixelBuffer[x][y][1] = color.G
@@ -142,4 +142,33 @@ func (display *Display) updateCamera() {
 	shift := display.window.Bounds().Size().Scaled(0.5).Sub(pixel.ZV)
 	cam := pixel.IM.Scaled(pixel.ZV, scale).Moved(shift)
 	display.window.SetMatrix(cam)
+}
+
+// Btn represents gameboy button.
+type Btn byte
+
+// Button mappings.
+var keyMap = map[pixelgl.Button]JoypadButton{
+	pixelgl.KeyZ:         ButtonA,
+	pixelgl.KeyX:         ButtonB,
+	pixelgl.KeyBackspace: ButtonSelect,
+	pixelgl.KeyEnter:     ButtonStart,
+	pixelgl.KeyRight:     ButtonRight,
+	pixelgl.KeyLeft:      ButtonLeft,
+	pixelgl.KeyUp:        ButtonUp,
+	pixelgl.KeyDown:      ButtonDown,
+}
+
+// ProcessInput handles joypad state changes.
+func (display *Display) ProcessInput(joypad *Joypad) {
+	for handledKey, button := range keyMap {
+		if display.window.JustPressed(handledKey) {
+			fmt.Println("Pressed", button)
+			joypad.KeyPress(button)
+		}
+		if display.window.JustReleased(handledKey) {
+			fmt.Println("Released", button)
+			joypad.KeyRelease(button)
+		}
+	}
 }

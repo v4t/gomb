@@ -12,6 +12,7 @@ type Gameboy struct {
 	MMU     *memory.MMU
 	PPU     *graphics.PPU
 	Display *graphics.Display
+	Joypad  *graphics.Joypad
 }
 
 // Create is constructor for gameboy emulator.
@@ -19,11 +20,13 @@ func Create() *Gameboy {
 	display := graphics.Init()
 	cpu := cpu.InitializeCPU()
 	ppu := graphics.InitPPU(cpu.MMU, display)
+	joypad := graphics.NewJoypad(cpu.MMU)
 	return &Gameboy{
 		CPU:     cpu,
 		PPU:     ppu,
 		MMU:     cpu.MMU,
 		Display: display,
+		Joypad:  joypad,
 	}
 }
 
@@ -51,5 +54,5 @@ func (gb *Gameboy) Update() {
 		cpu.HandleInterrupts(gb.CPU)
 	}
 	gb.Display.RenderImage()
+	gb.Display.ProcessInput(gb.Joypad)
 }
-

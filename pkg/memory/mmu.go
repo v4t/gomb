@@ -44,6 +44,9 @@ func InitializeMMU() *MMU {
 	mmu.Memory[0xff4a] = 0x00
 	mmu.Memory[0xff4b] = 0x00
 	mmu.Memory[0xffff] = 0x00
+
+	// Joypad
+	mmu.Memory[0xff00] = 0x3f
 	return &mmu
 }
 
