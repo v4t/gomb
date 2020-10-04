@@ -9,6 +9,7 @@ type PPURegisters struct {
 	ScrollX     PPURegister
 	ScrollY     PPURegister
 	Scanline    PPURegister
+	LYC         PPURegister
 	BgPalette   PPURegister
 	ObjPalette1 PPURegister
 	ObjPalette2 PPURegister
@@ -26,6 +27,7 @@ func InitRegisters(mmu *memory.MMU) *PPURegisters {
 		ScrollY:     PPURegister{mmu: mmu, address: 0xff42},
 		ScrollX:     PPURegister{mmu: mmu, address: 0xff43},
 		Scanline:    PPURegister{mmu: mmu, address: 0xff44},
+		LYC:         PPURegister{mmu: mmu, address: 0xff45},
 		BgPalette:   PPURegister{mmu: mmu, address: 0xff47},
 		ObjPalette1: PPURegister{mmu: mmu, address: 0xff48},
 		ObjPalette2: PPURegister{mmu: mmu, address: 0xff49},

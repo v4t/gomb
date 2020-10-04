@@ -1,7 +1,6 @@
 package graphics
 
 import (
-	"fmt"
 	"image/color"
 	"math"
 
@@ -163,11 +162,9 @@ var keyMap = map[pixelgl.Button]JoypadButton{
 func (display *Display) ProcessInput(joypad *Joypad) {
 	for handledKey, button := range keyMap {
 		if display.window.JustPressed(handledKey) {
-			fmt.Println("Pressed", button)
 			joypad.KeyPress(button)
 		}
 		if display.window.JustReleased(handledKey) {
-			fmt.Println("Released", button)
 			joypad.KeyRelease(button)
 		}
 	}

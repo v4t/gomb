@@ -39,82 +39,92 @@ func InitPPU(mmu *memory.MMU, display *Display) *PPU {
 
 // Execute GPU cycle.
 func (ppu *PPU) Execute(cycles int) {
-	line := ppu.registers.Scanline.Get()
+	ppu.SetPPUState()
+	// Is LCD enabled?
+	if !utils.TestBit(ppu.MMU.Memory[0xFF40], 7) {
+		return
+	}
 	ppu.clock += cycles
+	if ppu.clock >= 456 {
+		currentLine := ppu.registers.Scanline.Get() + 1
+		ppu.registers.Scanline.Set(currentLine)
+		ppu.clock = 0
 
-	oldState := ppu.state
+		if currentLine == 144 {
+			cpu.SetPPUInterrupt(cpu.VBlank, ppu.MMU)
+		} else if currentLine > 153 {
+			ppu.registers.Scanline.Set(0)
+		} else if currentLine < 144 {
+			ppu.renderScanline()
+		}
+	}
+}
 
-	switch ppu.state {
-	case OAMSearch:
-		if ppu.clock >= 80 {
-			ppu.state = PixelTransfer
-		}
-	case PixelTransfer:
-		if ppu.clock >= 172 {
-			ppu.clock = 0
-			ppu.state = HBlank
-			ppu.renderScan() // Put scanline to image buffer
-		}
-		break
-	case HBlank:
-		if ppu.clock >= 204 {
-			ppu.clock = 0
-			ppu.registers.Scanline.Set(line + 1)
-
-			if line == 143 {
-				ppu.state = VBlank
-				ppu.Display.RenderImage()
-			} else {
-				ppu.state = OAMSearch
-			}
-		}
-	case VBlank:
-		if ppu.clock >= 456 {
-			ppu.clock = 0
-			ppu.registers.Scanline.Set(line + 1)
-
-			if line > 153 {
-				ppu.state = OAMSearch
-				ppu.registers.Scanline.Set(0)
-			}
-		}
-		break
+// SetPPUState sets current ppu state.
+func (ppu *PPU) SetPPUState() {
+	lcdStatus := ppu.registers.LcdStatus.Get()
+	// Is LCD enabled?
+	if !utils.TestBit(ppu.MMU.Memory[0xFF40], 7) {
+		ppu.resetPPU(lcdStatus)
+		return
 	}
 
-	// Handle lcd state change
-	if oldState != ppu.state {
+	var mode PPUState
+	interruptNeeded := false
+	currentLine := ppu.registers.Scanline.Get()
+
+	if currentLine >= 144 {
+		mode = VBlank
+		lcdStatus = utils.SetBit(lcdStatus, 0)
+		lcdStatus = utils.ResetBit(lcdStatus, 1)
+		interruptNeeded = utils.TestBit(lcdStatus, 4)
+	} else if ppu.clock <= 80 {
+		mode = OAMSearch
+		lcdStatus = utils.SetBit(lcdStatus, 1)
+		lcdStatus = utils.ResetBit(lcdStatus, 0)
+		interruptNeeded = utils.TestBit(lcdStatus, 5)
+	} else if ppu.clock <= 172 {
+		mode = PixelTransfer
+		lcdStatus = utils.SetBit(lcdStatus, 1)
+		lcdStatus = utils.SetBit(lcdStatus, 0)
+	} else {
+		mode = HBlank
+		lcdStatus = utils.ResetBit(lcdStatus, 1)
+		lcdStatus = utils.ResetBit(lcdStatus, 0)
+		interruptNeeded = utils.TestBit(lcdStatus, 3)
+	}
+
+	// Set required interrupts
+	if interruptNeeded && (mode != ppu.state) {
 		cpu.SetPPUInterrupt(1, ppu.MMU)
 	}
-
-	// Check coincidence interrupt flag
-	status := ppu.MMU.Read(0xff41)
-	if line == ppu.MMU.Read(0xff45) {
-		status = utils.SetBit(status, 2)
-		if utils.TestBit(status, 6) {
+	if currentLine == ppu.registers.LYC.Get() {
+		lcdStatus = utils.SetBit(lcdStatus, 2)
+		if utils.TestBit(lcdStatus, 6) {
 			cpu.SetPPUInterrupt(1, ppu.MMU)
-		} else {
-			status = utils.ResetBit(status, 2)
 		}
-		ppu.MMU.Write(0xff41, status)
+	} else {
+		lcdStatus = utils.ResetBit(lcdStatus, 2)
 	}
+	ppu.state = mode
+	ppu.registers.LcdStatus.Set(lcdStatus)
 }
 
-func (ppu *PPU) setState(state PPUState) {
-	switch state {
-	case HBlank:
-	case VBlank:
-	case OAMSearch:
-	case PixelTransfer:
-
-	}
+// resetPPU sets ppu state to VBlank and resets scanline and clock.
+func (ppu *PPU) resetPPU(lcdStatus byte) {
+	ppu.clock = 0
+	ppu.registers.Scanline.Set(0)
+	lcdStatus &= 252
+	lcdStatus = utils.SetBit(lcdStatus, 0)
+	ppu.registers.LcdStatus.Set(lcdStatus)
 }
 
-func (ppu *PPU) renderScan() {
+func (ppu *PPU) renderScanline() {
 	control := ppu.MMU.Read(0xff40)
-	if utils.TestBit(control, 0) || true {
+	if utils.TestBit(control, 0) {
 		ppu.renderTiles()
 	}
-	if utils.TestBit(control, 1) || true {
+	if utils.TestBit(control, 1) {
 		ppu.renderSprites()
 	}
 }
