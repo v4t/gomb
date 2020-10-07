@@ -1,10 +1,6 @@
 package graphics
 
 import (
-	"fmt"
-
-	"github.com/v4t/gomb/pkg/cpu"
-	"github.com/v4t/gomb/pkg/memory"
 	"github.com/v4t/gomb/pkg/utils"
 )
 
@@ -23,17 +19,8 @@ const (
 	ButtonDown   JoypadButton = 7
 )
 
-/*
- A 0 4
- B 1 4
- Select 2 4
- Start 3 4
-
- right 0 5
- left 1 5
- up 2 5
- down 3 5
-*/
+// JoypadState represents currently pressed buttons.
+var JoypadState byte = 0xcf
 
 var btnRegMap = []int{
 	ButtonA:      0,
@@ -48,54 +35,107 @@ var btnRegMap = []int{
 
 // Joypad represents gameboy Joypad.
 type Joypad struct {
-	mmu *memory.MMU
+	state                 byte
+	buttonKeysSelected    bool
+	directionKeysSelected bool
 }
 
 // NewJoypad is constructor for Joypad.
-func NewJoypad(mmu *memory.MMU) *Joypad {
+func NewJoypad() *Joypad {
 	return &Joypad{
-		mmu: mmu,
+		state:                 0xff,
+		buttonKeysSelected:    false,
+		directionKeysSelected: false,
 	}
 }
 
 // KeyPress event handler.
 func (joypad *Joypad) KeyPress(key JoypadButton) {
-	ioRegister := joypad.mmu.Memory[0xff00]
-	interruptNeeded := false
-	if p15ButtonKeysSelected(ioRegister) && key <= 3 {
-		interruptNeeded = utils.TestBit(ioRegister, btnRegMap[key])
-		ioRegister = utils.ResetBit(ioRegister, btnRegMap[key])
-		fmt.Println("p15", ioRegister)
-	}
-	if p14DirectionKeysSelected(ioRegister) && key > 3 {
-		interruptNeeded = utils.TestBit(ioRegister, btnRegMap[key])
-		ioRegister = utils.ResetBit(ioRegister, btnRegMap[key])
-		fmt.Println("p14", ioRegister)
-	}
-	joypad.mmu.Memory[0xff00] = ioRegister
-	if interruptNeeded {
-		fmt.Println("irpt")
-		cpu.SetPPUInterrupt(cpu.Joypad, joypad.mmu)
-	}
+	joypad.state = utils.ResetBit(joypad.state, int(key))
+
+	// if p15ButtonKeysSelected(ioRegister) && key <= 3 {
+	// 	interruptNeeded = utils.TestBit(ioRegister, btnRegMap[key])
+	// 	ioRegister = utils.ResetBit(ioRegister, btnRegMap[key])
+	// }
+	// if p14DirectionKeysSelected(ioRegister) && key > 3 {
+	// 	interruptNeeded = utils.TestBit(ioRegister, btnRegMap[key])
+	// 	ioRegister = utils.ResetBit(ioRegister, btnRegMap[key])
+	// }
+	// joypad.mmu.Memory[0xff00] = ioRegister
+	// if interruptNeeded {
+	// 	cpu.SetPPUInterrupt(cpu.Joypad, joypad.mmu)
+	// }
+	// fmt.Println("after press")
+	// fmt.Println(
+	// 	utils.TestBit(ioRegister, 5), utils.TestBit(ioRegister, 4),
+	// 	utils.TestBit(ioRegister, 4), utils.TestBit(ioRegister, 2),
+	// 	utils.TestBit(ioRegister, 1), utils.TestBit(ioRegister, 0))
 }
 
 // KeyRelease event handler.
 func (joypad *Joypad) KeyRelease(key JoypadButton) {
-	ioRegister := joypad.mmu.Memory[0xff00]
-	if p15ButtonKeysSelected(ioRegister) && key <= 3 {
-		joypad.mmu.Memory[0xff00] = utils.SetBit(ioRegister, btnRegMap[key])
+	joypad.state = utils.SetBit(joypad.state, int(key))
+	// ioRegister := joypad.mmu.Memory[0xff00]
+	// if p15ButtonKeysSelected(ioRegister) && key <= 3 {
+	// 	joypad.mmu.Memory[0xff00] = utils.SetBit(ioRegister, btnRegMap[key])
+	// }
+	// if p14DirectionKeysSelected(ioRegister) && key > 3 {
+	// 	joypad.mmu.Memory[0xff00] = utils.SetBit(ioRegister, btnRegMap[key])
+	// }
+	// ioRegister = joypad.mmu.Memory[0xff00]
+	// fmt.Println("after release")
+	// fmt.Println(
+	// 	utils.TestBit(ioRegister, 5), utils.TestBit(ioRegister, 4),
+	// 	utils.TestBit(ioRegister, 4), utils.TestBit(ioRegister, 2),
+	// 	utils.TestBit(ioRegister, 1), utils.TestBit(ioRegister, 0))
+}
+
+func (joypad *Joypad) Read(address uint16) byte {
+	if address != 0xff00 {
+		panic("Attempted to access joypad register with wrong memory address.")
 	}
-	if p14DirectionKeysSelected(ioRegister) && key > 3 {
-		joypad.mmu.Memory[0xff00] = utils.SetBit(ioRegister, btnRegMap[key])
+	registerValue := byte(0xff)
+	if joypad.directionKeysSelected {
+		registerValue = utils.ResetBit(registerValue, 4)
+		registerValue &= ((joypad.state >> 4) | 0xf0)
+	} else if joypad.buttonKeysSelected {
+		registerValue = utils.ResetBit(registerValue, 5)
+		registerValue &= (joypad.state | 0xf0)
 	}
+	return registerValue
+}
+
+func (joypad *Joypad) Write(address uint16, value byte) {
+	// Set P14 and P15 selected state (0 = Select)
+	// fmt.Printf("%x\n", value)
+	joypad.directionKeysSelected = !utils.TestBit(value, 4)
+	joypad.buttonKeysSelected = !utils.TestBit(value, 5)
 }
 
 func p15ButtonKeysSelected(value byte) bool {
-	return utils.TestBit(value, 5)
+	return !utils.TestBit(value, 5)
 }
 
 func p14DirectionKeysSelected(value byte) bool {
-	return utils.TestBit(value, 4)
+	return !utils.TestBit(value, 4)
 }
 
+// func (joypad *Joypad) getCurrentState() byte {
+// 	//    BYTE res = m_Rom[0xFF00]
+// 	res := joypad.mmu.Memory[0xff00]
+// 	// flip all the bits
+// 	res ^= 0xFF
 
+// 	// are we interested in the standard buttons?
+// 	if !utils.TestBit(res, 4) {
+// 		// topJoypad := joypadState >> 4
+// 		// topJoypad |= 0xF0 // turn the top 4 bits on
+// 		// res &= topJoypad  // show what buttons are pressed
+// 	} else if !utils.TestBit(res, 5) {
+// 		//directional buttons
+// 		// bottomJoypad := joypadState & 0xF
+// 		// bottomJoypad |= 0xF0
+// 		// res &= bottomJoypad
+// 	}
+// 	return res
+// }

@@ -1,13 +1,19 @@
 package memory
 
-import "math"
+import (
+	"math"
+)
 
-// Memory contains emulator memory.
-// var Memory = make([]byte, math.MaxUint16+1)
+// MemoryRegion represents a specific memory region / block managed by MMU.
+type MemoryRegion interface {
+	Read(address uint16) byte
+	Write(address uint16, value byte)
+}
 
 // MMU manages RAM, ROM and cartridge data.
 type MMU struct {
 	Memory []byte
+	Input  MemoryRegion
 }
 
 // InitializeMMU creates new MMU instance.
@@ -46,12 +52,16 @@ func InitializeMMU() *MMU {
 	mmu.Memory[0xffff] = 0x00
 
 	// Joypad
-	mmu.Memory[0xff00] = 0x3f
+	mmu.Memory[0xff00] = 0xcf
 	return &mmu
 }
 
 // Read byte from memory address.
 func (mmu *MMU) Read(address uint16) byte {
+	if address == 0xff00 {
+		return mmu.Input.Read(address)
+	}
+
 	return mmu.Memory[address]
 }
 
@@ -71,6 +81,8 @@ func (mmu *MMU) Write(address uint16, value byte) {
 		mmu.Memory[address] = 0
 	} else if address == 0xff46 {
 		mmu.dmaTransfer(value)
+	} else if address == 0xff00 {
+		mmu.Input.Write(address, value)
 	} else {
 		mmu.Memory[address] = value
 	}

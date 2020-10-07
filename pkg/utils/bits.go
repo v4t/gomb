@@ -18,7 +18,7 @@ func TestBit(value byte, pos int) bool {
 	return result != 0
 }
 
-// GetBit return bit valua at given position.
+// GetBit return bit value at given position.
 func GetBit(value byte, pos int) int {
 	return int((value >> pos) & 1)
 }
