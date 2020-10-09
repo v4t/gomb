@@ -1,8 +1,8 @@
 package graphics
 
 import (
-	"github.com/v4t/gomb/pkg/cpu"
 	"github.com/v4t/gomb/pkg/memory"
+	"github.com/v4t/gomb/pkg/processor"
 	"github.com/v4t/gomb/pkg/utils"
 )
 
@@ -24,6 +24,7 @@ type PPU struct {
 	registers       *PPURegisters
 	Display         *Display
 	MMU             *memory.MMU
+	Interrupts      *processor.Interrupts
 
 	clock int
 }
@@ -51,7 +52,7 @@ func (ppu *PPU) Execute(cycles int) {
 		ppu.clock = 0
 
 		if currentLine == 144 {
-			cpu.SetPPUInterrupt(cpu.VBlank, ppu.MMU)
+			ppu.Interrupts.SetInterrupt(processor.VBlankInterrupt)
 		} else if currentLine > 153 {
 			ppu.registers.Scanline.Set(0)
 		} else if currentLine < 144 {
@@ -96,12 +97,12 @@ func (ppu *PPU) SetPPUState() {
 
 	// Set required interrupts
 	if interruptNeeded && (mode != ppu.state) {
-		cpu.SetPPUInterrupt(1, ppu.MMU)
+		ppu.Interrupts.SetInterrupt(processor.LCDStatusInterrupt)
 	}
 	if currentLine == ppu.registers.LYC.Get() {
 		lcdStatus = utils.SetBit(lcdStatus, 2)
 		if utils.TestBit(lcdStatus, 6) {
-			cpu.SetPPUInterrupt(1, ppu.MMU)
+			ppu.Interrupts.SetInterrupt(processor.LCDStatusInterrupt)
 		}
 	} else {
 		lcdStatus = utils.ResetBit(lcdStatus, 2)

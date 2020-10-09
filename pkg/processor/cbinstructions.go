@@ -1,4 +1,4 @@
-package cpu
+package processor
 
 var cbInstructions []func()
 

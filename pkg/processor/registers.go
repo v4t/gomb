@@ -1,4 +1,4 @@
-package cpu
+package processor
 
 // Registers represents CPU Registers.
 type Registers struct {

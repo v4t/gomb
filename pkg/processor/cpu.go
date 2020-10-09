@@ -1,4 +1,4 @@
-package cpu
+package processor
 
 import (
 	"github.com/v4t/gomb/pkg/memory"
@@ -22,6 +22,7 @@ const (
 
 // CPU represents CPU state.
 type CPU struct {
+	Interrupts *Interrupts
 	MMU       *memory.MMU
 	Registers Registers
 	Clock     Clock
@@ -38,6 +39,7 @@ type CPU struct {
 func InitializeCPU() *CPU {
 	cpu := &CPU{
 		MMU: memory.InitializeMMU(),
+		Interrupts: NewInterrupts(),
 		Registers: Registers{
 			A: 0x11,
 			B: 0x00,
@@ -70,11 +72,11 @@ func (cpu *CPU) Execute() int {
 		// fmt.Println(fmt.Sprintf("PC:%04x OP: %02x", cpu.PC, op))
 	}
 	if enableIrq {
-		EnableInterrupts(cpu)
+		cpu.Interrupts.Enable()
 		cpu.enablingInterrupts = false
 	}
 	if disableIrq {
-		DisableInterrupts(cpu)
+		cpu.Interrupts.Disable()
 		cpu.disablingInterrupts = false
 	}
 	return cycles

@@ -1,14 +1,14 @@
 package emulator
 
 import (
-	"github.com/v4t/gomb/pkg/cpu"
 	"github.com/v4t/gomb/pkg/graphics"
 	"github.com/v4t/gomb/pkg/memory"
+	"github.com/v4t/gomb/pkg/processor"
 )
 
 // Gameboy emulator.
 type Gameboy struct {
-	CPU     *cpu.CPU
+	CPU     *processor.CPU
 	MMU     *memory.MMU
 	PPU     *graphics.PPU
 	Display *graphics.Display
@@ -18,9 +18,14 @@ type Gameboy struct {
 // Create is constructor for gameboy emulator.
 func Create() *Gameboy {
 	display := graphics.Init()
-	cpu := cpu.InitializeCPU()
+	cpu := processor.InitializeCPU()
 	ppu := graphics.InitPPU(cpu.MMU, display)
-	joypad := graphics.NewJoypad(cpu.MMU)
+	joypad := graphics.NewJoypad()
+
+	cpu.MMU.Input = joypad
+	joypad.Interrupts = cpu.Interrupts
+	cpu.MMU.Interrupts = cpu.Interrupts
+	ppu.Interrupts = cpu.Interrupts
 	return &Gameboy{
 		CPU:     cpu,
 		PPU:     ppu,
@@ -43,15 +48,17 @@ func (gb *Gameboy) Start(rom []byte) {
 	})
 }
 
+// MaxCycles represents clock cycles executed for each frame.
+const MaxCycles = 69905
+
 // Update gameboy state.
 func (gb *Gameboy) Update() {
-	maxCycles := 69905
 	currentCycles := 0
-	for currentCycles < maxCycles {
+	for currentCycles < MaxCycles {
 		cycles := gb.CPU.Execute()
 		currentCycles += cycles
 		gb.PPU.Execute(cycles)
-		cpu.HandleInterrupts(gb.CPU)
+		gb.CPU.Interrupts.Resolve(gb.CPU)
 	}
 	gb.Display.RenderImage()
 	gb.Display.ProcessInput(gb.Joypad)

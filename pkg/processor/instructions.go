@@ -1,4 +1,4 @@
-package cpu
+package processor
 
 import (
 	"log"
@@ -741,5 +741,5 @@ func retCC(cpu *CPU, condition bool) {
 // RETI -- Pop two bytes from stack & jump to that address then enable interrupts.
 func reti(cpu *CPU) {
 	cpu.PC = popNN(cpu)
-	EnableInterrupts(cpu)
+	cpu.Interrupts.Enable()
 }

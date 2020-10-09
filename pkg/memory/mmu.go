@@ -12,8 +12,9 @@ type MemoryRegion interface {
 
 // MMU manages RAM, ROM and cartridge data.
 type MMU struct {
-	Memory []byte
-	Input  MemoryRegion
+	Memory     []byte
+	Input      MemoryRegion
+	Interrupts MemoryRegion
 }
 
 // InitializeMMU creates new MMU instance.
@@ -60,8 +61,9 @@ func InitializeMMU() *MMU {
 func (mmu *MMU) Read(address uint16) byte {
 	if address == 0xff00 {
 		return mmu.Input.Read(address)
+	} else if address == 0xffff || address == 0xff0f {
+		return mmu.Interrupts.Read(address)
 	}
-
 	return mmu.Memory[address]
 }
 
@@ -83,6 +85,8 @@ func (mmu *MMU) Write(address uint16, value byte) {
 		mmu.dmaTransfer(value)
 	} else if address == 0xff00 {
 		mmu.Input.Write(address, value)
+	} else if address == 0xffff || address == 0xff0f {
+		mmu.Interrupts.Write(address, value)
 	} else {
 		mmu.Memory[address] = value
 	}
