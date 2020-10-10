@@ -313,9 +313,7 @@ func initInstructionList(cpu *CPU) {
 }
 
 // NOP -- No operation.
-func nop() {
-	// log.Printf("NOP")
-}
+func nop() { }
 
 // XX -- Operation not supported.
 func xx() {
@@ -356,7 +354,7 @@ func decN(cpu *CPU, n *byte) {
 func decHL(cpu *CPU, address uint16) {
 	value := cpu.MMU.Read(address)
 	halfCarry := value&0x0f == 0
-	cpu.MMU.Write(address, value+1)
+	cpu.MMU.Write(address, value-1)
 	cpu.SetZero(value == 0)
 	cpu.SetNegative(true)
 	cpu.SetHalfCarry(halfCarry)
@@ -446,12 +444,10 @@ func xor(cpu *CPU, n byte) {
 
 // Compare A with n. This is basically an A - n subtraction instruction but the results are thrown away.
 func cp(cpu *CPU, n byte) {
-	result := cpu.Registers.A - n
-
-	cpu.SetZero(result == 0)
+	cpu.SetZero(cpu.Registers.A - n == 0)
 	cpu.SetNegative(true)
-	cpu.SetHalfCarry((cpu.Registers.A & 0x0f) > (n & 0x0f))
-	cpu.SetCarry(cpu.Registers.A > n)
+	cpu.SetHalfCarry((cpu.Registers.A & 0x0f) < (n & 0x0f))
+	cpu.SetCarry(cpu.Registers.A < n)
 }
 
 /* 16-bit arithmetic */

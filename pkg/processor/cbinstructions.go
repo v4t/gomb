@@ -396,7 +396,7 @@ func sra(cpu *CPU, n byte) byte {
 // SRL n -- Shift n right into Carry. MSB set to 0.
 func srl(cpu *CPU, n byte) byte {
 	leavingBit := n & 1
-	n = (n & 0x80) | (n >> 1)
+	n >>= 1
 	cpu.SetZero(n == 0)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
@@ -415,19 +415,19 @@ func swap(cpu *CPU, n byte) byte {
 }
 
 // BIT b,r -- Test bit b in register r.
-func bit(cpu *CPU, b, r byte) {
-	bit := r>>b&1 == 0
+func bit(cpu *CPU, r, b byte) {
+	bit := (r>>b)&1 == 0
 	cpu.SetZero(bit)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(true)
 }
 
 // SET b,r -- Set bit b in register r.
-func set(cpu *CPU, b, r byte) byte {
+func set(cpu *CPU, r, b byte) byte {
 	return r | (1 << b)
 }
 
 // RES b,r -- Reset bit b in register r.
-func res(cpu *CPU, b, r byte) byte {
+func res(cpu *CPU, r, b byte) byte {
 	return r & ^(1 << b)
 }

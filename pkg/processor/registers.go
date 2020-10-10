@@ -19,7 +19,7 @@ func (regs *Registers) AF() uint16 {
 
 // SetAF sets 16-bit value for AF union register.
 func (regs *Registers) SetAF(value uint16) {
-	var masked = value & 0xfff0 // F register value is masked
+	masked := value & 0xfff0 // F register value is masked
 
 	regs.A = byte(masked >> 8)
 	regs.F = byte(masked & 0xff)

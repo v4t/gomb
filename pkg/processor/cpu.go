@@ -93,6 +93,7 @@ func (cpu *CPU) Fetch() byte {
 func (cpu *CPU) Fetch16() uint16 {
 	i := uint16(cpu.Fetch())
 	j := uint16(cpu.Fetch())
+
 	return j<<8 | i
 }
 

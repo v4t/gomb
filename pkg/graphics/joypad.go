@@ -20,20 +20,6 @@ const (
 	ButtonDown   JoypadButton = 7
 )
 
-// JoypadState represents currently pressed buttons.
-var JoypadState byte = 0xcf
-
-var btnRegMap = []int{
-	ButtonA:      0,
-	ButtonB:      1,
-	ButtonSelect: 2,
-	ButtonStart:  3,
-	ButtonRight:  0,
-	ButtonLeft:   1,
-	ButtonUp:     2,
-	ButtonDown:   3,
-}
-
 // Joypad represents gameboy Joypad.
 type Joypad struct {
 	Interrupts            *processor.Interrupts
@@ -80,7 +66,6 @@ func (joypad *Joypad) Read(address uint16) byte {
 
 func (joypad *Joypad) Write(address uint16, value byte) {
 	// Set P14 and P15 selected state (0 = Select)
-	// fmt.Printf("%x\n", value)
 	joypad.directionKeysSelected = !utils.TestBit(value, 4)
 	joypad.buttonKeysSelected = !utils.TestBit(value, 5)
 }
@@ -92,4 +77,3 @@ func p15ButtonKeysSelected(value byte) bool {
 func p14DirectionKeysSelected(value byte) bool {
 	return !utils.TestBit(value, 4)
 }
-
