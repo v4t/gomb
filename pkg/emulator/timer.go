@@ -68,14 +68,11 @@ func (timer *Timer) Update(cycles int) {
 	timer.updateDividerRegister(cycles)
 	if timer.Enabled() {
 		timer.counter += cycles
-
 		freq := timer.getClockFrequency()
 		for timer.counter >= freq {
 			timer.counter -= freq
-			// tima := timer.Memory.HighRAM[0x05] /* TIMA */
 			if timer.tima == 0xff {
 				timer.tima = timer.tma
-				// timer.requestInterrupt(2)
 				timer.Interrupts.SetInterrupt(processor.TimerInterrupt)
 			} else {
 				timer.tima++

@@ -61,7 +61,10 @@ const MaxCycles = 69905
 func (gb *Gameboy) Update() {
 	currentCycles := 0
 	for currentCycles < MaxCycles {
-		cycles := gb.CPU.Execute()
+		cycles := 4
+		if !gb.CPU.Halted {
+			cycles = gb.CPU.Execute()
+		}
 		currentCycles += cycles
 		gb.Timer.Update(cycles)
 		gb.PPU.Execute(cycles)
