@@ -11,6 +11,7 @@ type Gameboy struct {
 	CPU     *processor.CPU
 	MMU     *memory.MMU
 	PPU     *graphics.PPU
+	Timer   *Timer
 	Display *graphics.Display
 	Joypad  *graphics.Joypad
 }
@@ -22,16 +23,21 @@ func Create() *Gameboy {
 	ppu := graphics.InitPPU(cpu.MMU, display)
 	joypad := graphics.NewJoypad()
 
+	timer := &Timer{}
+
+	cpu.MMU.Timer = timer
 	cpu.MMU.Input = joypad
 	joypad.Interrupts = cpu.Interrupts
 	cpu.MMU.Interrupts = cpu.Interrupts
 	ppu.Interrupts = cpu.Interrupts
+	timer.Interrupts = cpu.Interrupts
 	return &Gameboy{
 		CPU:     cpu,
 		PPU:     ppu,
 		MMU:     cpu.MMU,
 		Display: display,
 		Joypad:  joypad,
+		Timer:   timer,
 	}
 }
 
@@ -57,6 +63,7 @@ func (gb *Gameboy) Update() {
 	for currentCycles < MaxCycles {
 		cycles := gb.CPU.Execute()
 		currentCycles += cycles
+		gb.Timer.Update(cycles)
 		gb.PPU.Execute(cycles)
 		gb.CPU.Interrupts.Resolve(gb.CPU)
 	}

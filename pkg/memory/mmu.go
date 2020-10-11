@@ -15,6 +15,7 @@ type MMU struct {
 	Memory     []byte
 	Input      MemoryRegion
 	Interrupts MemoryRegion
+	Timer      MemoryRegion
 }
 
 // InitializeMMU creates new MMU instance.
@@ -63,6 +64,8 @@ func (mmu *MMU) Read(address uint16) byte {
 		return mmu.Input.Read(address)
 	} else if address == 0xffff || address == 0xff0f {
 		return mmu.Interrupts.Read(address)
+	}else if address == 0xff04 || address == 0xff05 || address == 0xff06 || address == 0xff07 {
+		return mmu.Timer.Read(address)
 	}
 	return mmu.Memory[address]
 }
@@ -87,6 +90,8 @@ func (mmu *MMU) Write(address uint16, value byte) {
 		mmu.Input.Write(address, value)
 	} else if address == 0xffff || address == 0xff0f {
 		mmu.Interrupts.Write(address, value)
+	} else if address == 0xff04 || address == 0xff05 || address == 0xff06 || address == 0xff07 {
+		mmu.Timer.Write(address, value)
 	} else {
 		mmu.Memory[address] = value
 	}

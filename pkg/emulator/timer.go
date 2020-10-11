@@ -1,67 +1,114 @@
 package emulator
 
-// import "github.com/v4t/gomb/pkg/utils"
+import (
+	"github.com/v4t/gomb/pkg/processor"
+	"github.com/v4t/gomb/pkg/utils"
+)
 
-// var timer int
+// ClockSpeed represents gameboy's clock frequency in Hz.
+const ClockSpeed = 4194304
 
-// const (
-// 	DIV  uint16 = 0xff04
-// 	TIMA uint16 = 0xff05
-// 	TMA  uint16 = 0xff06
-// 	TMC  uint16 = 0xff07
-// )
+// Addresses for timer registers.
+const (
+	DIV  uint16 = 0xff04
+	TIMA uint16 = 0xff05
+	TMA  uint16 = 0xff06
+	TMC  uint16 = 0xff07
+)
 
-// func UpdateTimers(cycles int) {
-// 	//    DoDividerRegister(cycles)
+// Timer handles timer register updates and memory operations.
+type Timer struct {
+	Interrupts *processor.Interrupts
 
-// 	// the clock must be enabled to update the clock
-// 	if IsClockEnabled() {
-// 		timer -= cycles
+	// Internal counters
+	counter int
+	divider int
 
-// 		// enough cpu clock cycles have happened to update the timer
-// 		if timer <= 0 {
-// 			// reset m_TimerTracer to the correct value
-// 			SetClockFreq()
+	// Registers
+	div  byte // Divider register
+	tima byte // Timer counter
+	tma  byte // Timer modulo
+	tmc  byte // Timer control
+}
 
-// 			// timer about to overflow
-// 			if ReadMemory(TIMA) == 255 {
-// 				// WriteMemory(TIMA, ReadMemory(TMA))
-// 				// RequestInterupt(2)
-// 			} else {
-// 				// WriteMemory(TIMA, ReadMemory(TIMA)+1)
-// 			}
-// 		}
-// 	}
-// }
+// Read value from one of the timer registers.
+func (timer *Timer) Read(address uint16) byte {
+	switch address {
+	case DIV:
+		return timer.div
+	case TIMA:
+		return timer.tima
+	case TMA:
+		return timer.tma
+	case TMC:
+		return timer.tmc
+	default:
+		panic("Attempted to read timer registers with invalid address.")
+	}
+}
 
-// var dividerCounter byte
+// Write value to one of the timer registers.
+func (timer *Timer) Write(address uint16, value byte) {
+	switch address {
+	case DIV:
+		timer.div = 0
+	case TIMA:
+		timer.tima = value
+	case TMA:
+		timer.tma = value
+	case TMC:
+		timer.tmc = value
+	default:
+		panic("Attempted to write to timer registers with invalid address.")
+	}
+}
 
-// func DoDividerRegister(cycles int) {
-// 	m_DividerRegister += cycles
-// 	if dividerCounter >= 255 {
-// 		dividerCounter = 0
-// 		m_Rom[0xFF04]++
-// 	}
-// }
+// Update timer registers.
+func (timer *Timer) Update(cycles int) {
+	timer.updateDividerRegister(cycles)
+	if timer.Enabled() {
+		timer.counter += cycles
 
-// func IsClockEnabled() bool {
-// 	return utils.TestBit(ReadMemory(TMC), 2)
-// }
+		freq := timer.getClockFrequency()
+		for timer.counter >= freq {
+			timer.counter -= freq
+			// tima := timer.Memory.HighRAM[0x05] /* TIMA */
+			if timer.tima == 0xff {
+				timer.tima = timer.tma
+				// timer.requestInterrupt(2)
+				timer.Interrupts.SetInterrupt(processor.TimerInterrupt)
+			} else {
+				timer.tima++
+			}
+		}
+	}
+}
 
-// func SetClockFreq() {
-// 	freq := GetClockFreq()
-// 	switch freq {
-// 	case 0:
-// 		timer = 1024
-// 	case 1:
-// 		timer = 16
-// 	case 2:
-// 		timer = 64
-// 	case 3:
-// 		timer = 256
-// 	}
-// }
+// Enabled checks if timer is runnign from TMC register.
+func (timer *Timer) Enabled() bool {
+	return utils.TestBit(timer.tmc, 2)
+}
 
-// func GetClockFreq() byte {
-// 	return ReadMemory(TMC) & 0x3
-// }
+// getClockFrequency returns current frequency based on TMC register.
+func (timer *Timer) getClockFrequency() int {
+	switch timer.tmc & 0x3 {
+	case 0:
+		return 1024 // 4096Hz
+	case 1:
+		return 16 // 262144Hz
+	case 2:
+		return 64 // 65536Hz
+	default:
+		return 256 // 16384Hz
+	}
+}
+
+// updateDividerRegister performs the periodical divider register update.
+// DIV register does a periodical increment at 16482Hz frequency which is equivalent to256 CPU clock cycles.
+func (timer *Timer) updateDividerRegister(cycles int) {
+	timer.divider += cycles
+	if timer.divider >= 255 {
+		timer.divider -= 255
+		timer.div++
+	}
+}

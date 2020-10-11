@@ -59,6 +59,9 @@ func InitializeCPU() *CPU {
 
 // Execute next CPU cycle.
 func (cpu *CPU) Execute() int {
+	if cpu.Halted || cpu.Stopped {
+		return 0
+	}
 	enableIrq := cpu.enablingInterrupts
 	disableIrq := cpu.disablingInterrupts
 	op := cpu.Fetch()
