@@ -94,8 +94,8 @@ func initInstructionList(cpu *CPU) {
 	instructions[0x31] = func() { cpu.SP = cpu.Fetch16() }                         // LD SP,nn
 	instructions[0x32] = func() { lddHLA(cpu) }                                    // LDD (HL),A
 	instructions[0x33] = func() { cpu.SP++ }                                       // INC SP
-	instructions[0x34] = func() { incHL(cpu, cpu.Registers.HL()) }                 // INC (HL)
-	instructions[0x35] = func() { decHL(cpu, cpu.Registers.HL()) }                 // DEC (HL)
+	instructions[0x34] = func() { incHL(cpu) }                                     // INC (HL)
+	instructions[0x35] = func() { decHL(cpu) }                                     // DEC (HL)
 	instructions[0x36] = func() { cpu.MMU.Write(cpu.Registers.HL(), cpu.Fetch()) } // LD (HL),n
 	instructions[0x37] = func() { scf(cpu) }                                       // SCF
 	instructions[0x38] = func() { jrCC(cpu, cpu.Carry(), int8(cpu.Fetch())) }      // JP C,*
@@ -207,7 +207,7 @@ func initInstructionList(cpu *CPU) {
 	instructions[0x9c] = func() { sbc(cpu, cpu.Registers.H) }                  // SBC A,H
 	instructions[0x9d] = func() { sbc(cpu, cpu.Registers.L) }                  // SBC A,L
 	instructions[0x9e] = func() { sbc(cpu, cpu.MMU.Read(cpu.Registers.HL())) } // SBC A,(HL)
-	instructions[0x9f] = func() { sbc(cpu, cpu.Registers.D) }                  // SBC A,A
+	instructions[0x9f] = func() { sbc(cpu, cpu.Registers.A) }                  // SBC A,A
 
 	instructions[0xa0] = func() { and(cpu, cpu.Registers.B) }                  // AND B
 	instructions[0xa1] = func() { and(cpu, cpu.Registers.C) }                  // AND C
@@ -313,7 +313,7 @@ func initInstructionList(cpu *CPU) {
 }
 
 // NOP -- No operation.
-func nop() { }
+func nop() {}
 
 // XX -- Operation not supported.
 func xx() {
@@ -332,12 +332,15 @@ func incN(cpu *CPU, n *byte) {
 }
 
 // INC (HL) -- Increment value at address HL.
-func incHL(cpu *CPU, address uint16) {
+func incHL(cpu *CPU) {
+	address := cpu.Registers.HL()
 	value := cpu.MMU.Read(address)
 	halfCarry := (value&0xf)+1 > 0xf
-	cpu.MMU.Write(address, value+1)
+	result := value + 1
+
+	cpu.MMU.Write(address, result)
 	cpu.SetNegative(false)
-	cpu.SetZero(value == 0)
+	cpu.SetZero(result == 0)
 	cpu.SetHalfCarry(halfCarry)
 }
 
@@ -351,11 +354,14 @@ func decN(cpu *CPU, n *byte) {
 }
 
 // DEC (HL) -- Decrement value at address HL.
-func decHL(cpu *CPU, address uint16) {
+func decHL(cpu *CPU) {
+	address := cpu.Registers.HL()
 	value := cpu.MMU.Read(address)
 	halfCarry := value&0x0f == 0
-	cpu.MMU.Write(address, value-1)
-	cpu.SetZero(value == 0)
+	result := value - 1
+
+	cpu.MMU.Write(address, result)
+	cpu.SetZero(result == 0)
 	cpu.SetNegative(true)
 	cpu.SetHalfCarry(halfCarry)
 }
@@ -390,20 +396,22 @@ func adc(cpu *CPU, n byte) {
 
 // SUB n -- Subtract n from A.
 func sub(cpu *CPU, n byte) {
-	diff := int16(cpu.Registers.A) - int16(n)
-	halfCarry := ((cpu.Registers.A & 0xf) - (n & 0xf)) < 0
-	cpu.Registers.A = byte(diff)
-
-	cpu.SetZero(cpu.Registers.A == 0)
+	diff := cpu.Registers.A - n
 	cpu.SetNegative(true)
-	cpu.SetHalfCarry(halfCarry)
-	cpu.SetCarry(diff < 0)
+	cpu.SetHalfCarry(cpu.Registers.A&0xf < n&0xf)
+	cpu.SetCarry(cpu.Registers.A&0xff < n&0xff)
+	cpu.SetZero(diff == 0)
+	cpu.Registers.A = diff
 }
 
 // SBC n + Carry flag from A.
 func sbc(cpu *CPU, n byte) {
-	diff := int16(cpu.Registers.A) + int16(n)
-	halfCarry := ((cpu.Registers.A & 0xf) - (n & 0xf)) < 0
+	carry := int16(0)
+	if cpu.Carry() {
+		carry = 1
+	}
+	diff := int16(cpu.Registers.A) - int16(n) - carry
+	halfCarry := int16(cpu.Registers.A&0x0f)-int16(n&0xf)-carry < 0
 	cpu.Registers.A = byte(diff)
 
 	cpu.SetZero(cpu.Registers.A == 0)
@@ -444,7 +452,7 @@ func xor(cpu *CPU, n byte) {
 
 // Compare A with n. This is basically an A - n subtraction instruction but the results are thrown away.
 func cp(cpu *CPU, n byte) {
-	cpu.SetZero(cpu.Registers.A - n == 0)
+	cpu.SetZero(cpu.Registers.A-n == 0)
 	cpu.SetNegative(true)
 	cpu.SetHalfCarry((cpu.Registers.A & 0x0f) < (n & 0x0f))
 	cpu.SetCarry(cpu.Registers.A < n)
@@ -474,17 +482,13 @@ func addHL(cpu *CPU, n uint16) {
 
 // ADD SP,n -- Add signed byte n to Stack Pointer (SP).
 func addSP(cpu *CPU, n int8) {
-	sum := int32(cpu.SP) + int32(n)
-	if n >= 0 {
-		cpu.SetCarry(((sum & 0xff) + int32(n)) > 0xff)
-		cpu.SetHalfCarry(((sum & 0xf) + int32(n&0xf)) > 0xf)
-	} else {
-		cpu.SetCarry((sum & 0xff) <= int32(cpu.SP&0xff))
-		cpu.SetHalfCarry((sum & 0xf) <= int32(cpu.SP&0xf))
-	}
+	sum := uint16(int32(cpu.SP) + int32(n))
+	tmp := cpu.SP ^ uint16(n) ^ sum
+	cpu.SetHalfCarry(tmp&0x10 == 0x10)
+	cpu.SetCarry(tmp&0x100 == 0x100)
 	cpu.SetZero(false)
 	cpu.SetNegative(false)
-	cpu.SP = uint16(sum)
+	cpu.SP = sum
 }
 
 /* 8-bit loads */
@@ -517,14 +521,10 @@ func ldiAHL(cpu *CPU) {
 
 // LD HL,SP+n -- Put SP + n effective address into HL
 func ldHLSPPlusN(cpu *CPU, n int8) {
-	sum := int32(cpu.SP) + int32(n)
-	if n >= 0 {
-		cpu.SetCarry(((sum & 0xff) + int32(n)) > 0xff)
-		cpu.SetHalfCarry(((sum & 0xf) + int32(n&0xf)) > 0xf)
-	} else {
-		cpu.SetCarry((sum & 0xff) <= int32(cpu.SP&0xff))
-		cpu.SetHalfCarry((sum & 0xf) <= int32(cpu.SP&0xf))
-	}
+	sum := uint16(int32(cpu.SP) + int32(n))
+	tmp := cpu.SP ^ uint16(n) ^ sum
+	cpu.SetHalfCarry(tmp&0x10 == 0x10)
+	cpu.SetCarry(tmp&0x100 == 0x100)
 	cpu.SetZero(false)
 	cpu.SetNegative(false)
 	cpu.Registers.SetHL(uint16(sum))
@@ -566,7 +566,7 @@ func rlca(cpu *CPU) {
 	leavingBit := cpu.Registers.A >> 7
 	cpu.Registers.A = cpu.Registers.A<<1 | leavingBit
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(false)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
@@ -581,7 +581,7 @@ func rla(cpu *CPU) {
 	}
 	cpu.Registers.A = cpu.Registers.A<<1 | carry
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(false)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
@@ -595,7 +595,7 @@ func rrca(cpu *CPU) {
 		cpu.Registers.A |= 0x80
 	}
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(false)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)
@@ -613,7 +613,7 @@ func rra(cpu *CPU) {
 		cpu.Registers.A |= 0x80
 	}
 
-	cpu.SetZero(cpu.Registers.A == 0)
+	cpu.SetZero(false)
 	cpu.SetNegative(false)
 	cpu.SetHalfCarry(false)
 	cpu.SetCarry(leavingBit == 1)

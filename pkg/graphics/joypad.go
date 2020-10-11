@@ -39,6 +39,8 @@ func NewJoypad() *Joypad {
 
 // KeyPress event handler.
 func (joypad *Joypad) KeyPress(key JoypadButton) {
+	// TODO: handle pressing up & down or left & right at the same time
+
 	joypad.state = utils.ResetBit(joypad.state, int(key))
 	joypad.Interrupts.SetInterrupt(processor.JoypadInterrupt)
 }
