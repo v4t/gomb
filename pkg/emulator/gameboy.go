@@ -22,7 +22,6 @@ func Create() *Gameboy {
 	cpu := processor.InitializeCPU()
 	ppu := graphics.InitPPU(cpu.MMU, display)
 	joypad := graphics.NewJoypad()
-
 	timer := &Timer{}
 
 	cpu.MMU.Timer = timer

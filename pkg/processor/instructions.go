@@ -670,7 +670,12 @@ func scf(cpu *CPU) {
 
 // HALT -- Power down CPU until an interrupt occurs.
 func halt(cpu *CPU) {
-	cpu.Halted = true
+	irqPending := cpu.Interrupts.IE & cpu.Interrupts.IF & 0x1f != 0
+	if !cpu.Interrupts.IME && irqPending {
+		cpu.haltBug = true
+	} else {
+		cpu.Halted = true
+	}
 }
 
 // STOP -- Halt CPU & LCD display until button pressed.

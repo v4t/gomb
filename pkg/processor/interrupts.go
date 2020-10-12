@@ -40,8 +40,8 @@ type Interrupts struct {
 func NewInterrupts() *Interrupts {
 	return &Interrupts{
 		IME: false,
-		IF:  0,
-		IE:  0xe1,
+		IF:  0xe1,
+		IE:  0x00,
 	}
 }
 
@@ -71,7 +71,7 @@ func (interrupts *Interrupts) Write(address uint16, value byte) {
 	if address == 0xffff {
 		interrupts.IE = value
 	} else if address == 0xff0f {
-		interrupts.IF = value
+		interrupts.IF = value | 0xe0 // 3 high bits always return 1
 	} else {
 		panic("Attempted writing to interrupt registers with invalid memory address.")
 	}
@@ -84,7 +84,7 @@ func (interrupts *Interrupts) SetInterrupt(flag InterruptFlag) {
 
 // Resolve raised interrupts accordingly.
 func (interrupts *Interrupts) Resolve(cpu *CPU) {
-	if !interrupts.IME || interrupts.IF == 0 {
+	if !interrupts.IME && !cpu.Halted {
 		return
 	}
 	for f := 0; f < 5; f++ {
@@ -96,7 +96,8 @@ func (interrupts *Interrupts) Resolve(cpu *CPU) {
 
 // resolveInterrupt is a helper function for resolving a specific interrupt.
 func (interrupts *Interrupts) resolveInterrupt(flag int, cpu *CPU) {
-	// Skip processing interrupts if cpu is halted without interrupts.
+	// If interrupts are pending, IME is false and halt has been called,
+	// cpu continues executing instructions without halting or jumping to interrupt vector.
 	if !interrupts.IME && cpu.Halted {
 		cpu.Halted = false
 		return

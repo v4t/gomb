@@ -23,14 +23,15 @@ const (
 // CPU represents CPU state.
 type CPU struct {
 	Interrupts *Interrupts
-	MMU       *memory.MMU
-	Registers Registers
-	Clock     Clock
-	PC        uint16
-	SP        uint16
-	Halted    bool
-	Stopped   bool
+	MMU        *memory.MMU
+	Registers  Registers
+	Clock      Clock
+	PC         uint16
+	SP         uint16
+	Halted     bool
+	Stopped    bool
 
+	haltBug             bool
 	enablingInterrupts  bool
 	disablingInterrupts bool
 }
@@ -38,7 +39,7 @@ type CPU struct {
 // InitializeCPU initializes cpu values
 func InitializeCPU() *CPU {
 	cpu := &CPU{
-		MMU: memory.InitializeMMU(),
+		MMU:        memory.InitializeMMU(),
 		Interrupts: NewInterrupts(),
 		Registers: Registers{
 			A: 0x11,
@@ -65,11 +66,10 @@ func (cpu *CPU) Execute() int {
 	cycles := 0
 	if op == 0xcb {
 		op = cpu.Fetch()
-		cycles = ExecuteCBInstruction(cpu, op)
-		// fmt.Println("CB", fmt.Sprintf("PC:%04x OP: %04x", cpu.PC, op))
+		cycles += InstructionCycles[0xcb]
+		cycles += ExecuteCBInstruction(cpu, op)
 	} else {
-		cycles = ExecuteInstruction(cpu, op)
-		// fmt.Println(fmt.Sprintf("PC:%04x OP: %02x", cpu.PC, op))
+		cycles += ExecuteInstruction(cpu, op)
 	}
 	if enableIrq {
 		cpu.Interrupts.Enable()
@@ -79,12 +79,16 @@ func (cpu *CPU) Execute() int {
 		cpu.Interrupts.Disable()
 		cpu.disablingInterrupts = false
 	}
-	return cycles
+	return cycles * 4
 }
 
 // Fetch retrieve next byte from memory.
 func (cpu *CPU) Fetch() byte {
 	op := cpu.MMU.Read(cpu.PC)
+	if cpu.haltBug {
+		cpu.haltBug = false
+		return op
+	}
 	cpu.PC++
 	return op
 }
