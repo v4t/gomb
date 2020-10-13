@@ -11,10 +11,10 @@ import (
 
 // DefaultPalette represents the available colors.
 var DefaultPalette = [4]color.RGBA{
-	color.RGBA{0xe0, 0xf0, 0xe7, 0xff}, // White
-	color.RGBA{0x8b, 0xa3, 0x94, 0xff}, // Light gray
-	color.RGBA{0x55, 0x64, 0x5a, 0xff}, // Dark gray
-	color.RGBA{0x34, 0x3d, 0x37, 0xff}, // Black
+	color.RGBA{0xe0, 0xf8, 0xd0, 0xff}, // White
+	color.RGBA{0x88, 0xc0, 0x70, 0xff}, // Light gray
+	color.RGBA{0x34, 0x68, 0x56, 0xff}, // Dark gray
+	color.RGBA{0x08, 0x18, 0x20, 0xff}, // Black
 }
 
 // Display screen dimensions
@@ -23,13 +23,26 @@ const (
 	ScreenHeight = 144
 )
 
+
+// Keyboard to joypad button mappings.
+var keyMap = map[pixelgl.Button]JoypadButton{
+	pixelgl.KeyZ:         ButtonA,
+	pixelgl.KeyX:         ButtonB,
+	pixelgl.KeyBackspace: ButtonSelect,
+	pixelgl.KeyEnter:     ButtonStart,
+	pixelgl.KeyRight:     ButtonRight,
+	pixelgl.KeyLeft:      ButtonLeft,
+	pixelgl.KeyUp:        ButtonUp,
+	pixelgl.KeyDown:      ButtonDown,
+}
+
 // Display represents gameboy display.
 type Display struct {
 	Palette     [4]color.RGBA
 	window      *pixelgl.Window
 	image       *pixel.PictureData
 	enabled     bool
-	pixelBuffer [ScreenWidth][ScreenHeight][4]uint8
+	pixelBuffer [ScreenWidth][ScreenHeight][3]uint8
 	offset      int
 }
 
@@ -103,22 +116,21 @@ func (display *Display) Draw(x byte, y byte, colorID byte) {
 		display.pixelBuffer[x][y][0] = color.R
 		display.pixelBuffer[x][y][1] = color.G
 		display.pixelBuffer[x][y][2] = color.B
-		display.pixelBuffer[x][y][3] = color.A
 	}
 }
 
 // RenderImage is called when image frame is complete.
 func (display *Display) RenderImage() {
-	// display.image.Pix = display.imgBuffer
 	img := make([]color.RGBA, ScreenWidth*ScreenHeight)
 	for y := 0; y < ScreenHeight; y++ {
 		for x := 0; x < ScreenWidth; x++ {
 			index := (ScreenHeight-1-y)*ScreenWidth + x
 			img[index] = color.RGBA{
-				display.pixelBuffer[x][y][0],
-				display.pixelBuffer[x][y][1],
-				display.pixelBuffer[x][y][2],
-				display.pixelBuffer[x][y][3]}
+				R: display.pixelBuffer[x][y][0],
+				G: display.pixelBuffer[x][y][1],
+				B: display.pixelBuffer[x][y][2],
+				A: 0xff,
+			}
 		}
 	}
 	display.image.Pix = img
@@ -141,21 +153,6 @@ func (display *Display) updateCamera() {
 	shift := display.window.Bounds().Size().Scaled(0.5).Sub(pixel.ZV)
 	cam := pixel.IM.Scaled(pixel.ZV, scale).Moved(shift)
 	display.window.SetMatrix(cam)
-}
-
-// Btn represents gameboy button.
-type Btn byte
-
-// Button mappings.
-var keyMap = map[pixelgl.Button]JoypadButton{
-	pixelgl.KeyZ:         ButtonA,
-	pixelgl.KeyX:         ButtonB,
-	pixelgl.KeyBackspace: ButtonSelect,
-	pixelgl.KeyEnter:     ButtonStart,
-	pixelgl.KeyRight:     ButtonRight,
-	pixelgl.KeyLeft:      ButtonLeft,
-	pixelgl.KeyUp:        ButtonUp,
-	pixelgl.KeyDown:      ButtonDown,
 }
 
 // ProcessInput handles joypad state changes.

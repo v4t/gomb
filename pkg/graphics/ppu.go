@@ -47,10 +47,7 @@ func (ppu *PPU) Execute(cycles int) {
 	}
 	ppu.clock += cycles
 	if ppu.clock >= 456 {
-		currentLine := ppu.registers.Scanline.Get() + 1
-		ppu.registers.Scanline.Set(currentLine)
-		ppu.clock = 0
-
+		currentLine := ppu.registers.Scanline.Get()
 		if currentLine == 144 {
 			ppu.Interrupts.SetInterrupt(processor.VBlankInterrupt)
 		} else if currentLine > 153 {
@@ -58,6 +55,8 @@ func (ppu *PPU) Execute(cycles int) {
 		} else if currentLine < 144 {
 			ppu.renderScanline()
 		}
+		ppu.registers.Scanline.Set(currentLine + 1)
+		ppu.clock = 0
 	}
 }
 

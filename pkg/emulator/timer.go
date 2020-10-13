@@ -5,9 +5,6 @@ import (
 	"github.com/v4t/gomb/pkg/utils"
 )
 
-// ClockSpeed represents gameboy's clock frequency in Hz.
-const ClockSpeed = 4194304
-
 // Addresses for timer registers.
 const (
 	DIV  uint16 = 0xff04

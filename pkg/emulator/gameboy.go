@@ -1,10 +1,15 @@
 package emulator
 
 import (
+	"time"
+
 	"github.com/v4t/gomb/pkg/graphics"
 	"github.com/v4t/gomb/pkg/memory"
 	"github.com/v4t/gomb/pkg/processor"
 )
+
+// FPS rate for emulator.
+const FPS = 60
 
 // Gameboy emulator.
 type Gameboy struct {
@@ -46,9 +51,12 @@ func (gb *Gameboy) Start(rom []byte) {
 
 	gb.Display.Run(func() {
 		gb.Display.Init()
-
+		t := time.NewTicker(time.Second / FPS)
 		for !gb.Display.Closed() {
-			gb.Update()
+			select {
+			case <-t.C:
+				gb.Update()
+			}
 		}
 	})
 }
