@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 
+	"github.com/v4t/gomb/pkg/cartridge"
 	"github.com/v4t/gomb/pkg/emulator"
 )
 
@@ -19,13 +20,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when loading ROM: %v", err)
 	}
-	if len(rom) > math.MaxUint16 {
-		log.Fatalf("Rom doesn't fit in memory")
-	}
+
+	cart := cartridge.NewCartridge(rom)
+	fmt.Println(cart)
 
 	gb := emulator.Create()
-	gb.Start(rom)
-
+	gb.Start(cart)
 	os.Exit(0)
 }
 

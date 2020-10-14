@@ -3,6 +3,7 @@ package emulator
 import (
 	"time"
 
+	"github.com/v4t/gomb/pkg/cartridge"
 	"github.com/v4t/gomb/pkg/graphics"
 	"github.com/v4t/gomb/pkg/memory"
 	"github.com/v4t/gomb/pkg/processor"
@@ -46,8 +47,8 @@ func Create() *Gameboy {
 }
 
 // Start gameboy emulator.
-func (gb *Gameboy) Start(rom []byte) {
-	gb.MMU.LoadRom(rom)
+func (gb *Gameboy) Start(cart *cartridge.Cartridge) {
+	gb.MMU.Cartridge = cart
 
 	gb.Display.Run(func() {
 		gb.Display.Init()

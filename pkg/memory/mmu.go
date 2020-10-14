@@ -13,6 +13,7 @@ type MemoryRegion interface {
 // MMU manages RAM, ROM and cartridge data.
 type MMU struct {
 	Memory     []byte
+	Cartridge  MemoryRegion
 	Input      MemoryRegion
 	Interrupts MemoryRegion
 	Timer      MemoryRegion
@@ -60,7 +61,9 @@ func InitializeMMU() *MMU {
 
 // Read byte from memory address.
 func (mmu *MMU) Read(address uint16) byte {
-	if address == 0xff00 {
+	if address < 0x8000 {
+		return mmu.Cartridge.Read(address)
+	}  else if address == 0xff00 {
 		return mmu.Input.Read(address)
 	} else if address == 0xffff || address == 0xff0f {
 		return mmu.Interrupts.Read(address)
@@ -73,8 +76,7 @@ func (mmu *MMU) Read(address uint16) byte {
 // Write byte to memory address.
 func (mmu *MMU) Write(address uint16, value byte) {
 	if address < 0x8000 {
-		// Read only memory
-		return
+		mmu.Cartridge.Write(address, value)
 	} else if (address >= 0xe000) && (address < 0xfe00) {
 		// Echo ram
 		mmu.Memory[address] = value
@@ -95,11 +97,6 @@ func (mmu *MMU) Write(address uint16, value byte) {
 	} else {
 		mmu.Memory[address] = value
 	}
-}
-
-// LoadRom copies rom to memory.
-func (mmu *MMU) LoadRom(rom []byte) {
-	copy(mmu.Memory[:], rom)
 }
 
 func (mmu *MMU) dmaTransfer(value byte) {
