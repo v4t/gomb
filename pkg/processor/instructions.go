@@ -1,9 +1,5 @@
 package processor
 
-import (
-	"log"
-)
-
 var instructions []func()
 
 // ExecuteInstruction executes given operation and returns the amount of cycles taken.
@@ -317,7 +313,7 @@ func nop() {}
 
 // XX -- Operation not supported.
 func xx() {
-	log.Fatalf("Operation not supported")
+	panic("Operation not supported")
 }
 
 /* 8-bit ALU */
@@ -670,7 +666,7 @@ func scf(cpu *CPU) {
 
 // HALT -- Power down CPU until an interrupt occurs.
 func halt(cpu *CPU) {
-	irqPending := cpu.Interrupts.IE & cpu.Interrupts.IF & 0x1f != 0
+	irqPending := cpu.Interrupts.IE&cpu.Interrupts.IF&0x1f != 0
 	if !cpu.Interrupts.IME && irqPending {
 		cpu.haltBug = true
 	} else {

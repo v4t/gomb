@@ -36,10 +36,10 @@ type CPU struct {
 	disablingInterrupts bool
 }
 
-// InitializeCPU initializes cpu values
-func InitializeCPU() *CPU {
+// NewCPU is a constructor for CPU.
+func NewCPU() *CPU {
 	cpu := &CPU{
-		MMU:        memory.InitializeMMU(),
+		MMU:        memory.NewMMU(),
 		Interrupts: NewInterrupts(),
 		Registers: Registers{
 			A: 0x11,
@@ -64,6 +64,7 @@ func (cpu *CPU) Execute() int {
 	disableIrq := cpu.disablingInterrupts
 	op := cpu.Fetch()
 	cycles := 0
+
 	if op == 0xcb {
 		op = cpu.Fetch()
 		cycles += InstructionCycles[0xcb]

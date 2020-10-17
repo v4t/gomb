@@ -9,8 +9,11 @@ import (
 	"github.com/v4t/gomb/pkg/processor"
 )
 
-// FPS rate for emulator.
-const FPS = 60
+// FPS rate for emulator. (Sped up a bit from the actual 60 fps)
+const FPS = 100
+
+// MaxCycles represents clock cycles executed for each frame.
+const MaxCycles = 69905
 
 // Gameboy emulator.
 type Gameboy struct {
@@ -22,11 +25,11 @@ type Gameboy struct {
 	Joypad  *graphics.Joypad
 }
 
-// Create is constructor for gameboy emulator.
-func Create() *Gameboy {
-	display := graphics.Init()
-	cpu := processor.InitializeCPU()
-	ppu := graphics.InitPPU(cpu.MMU, display)
+// NewGameboy is constructor for gameboy emulator.
+func NewGameboy() *Gameboy {
+	display := &graphics.Display{}
+	cpu := processor.NewCPU()
+	ppu := graphics.NewPPU(cpu.MMU, display)
 	joypad := graphics.NewJoypad()
 	timer := &Timer{}
 
@@ -51,7 +54,7 @@ func (gb *Gameboy) Start(cart *cartridge.Cartridge) {
 	gb.MMU.Cartridge = cart
 
 	gb.Display.Run(func() {
-		gb.Display.Init()
+		gb.Display.Initialize()
 		t := time.NewTicker(time.Second / FPS)
 		for !gb.Display.Closed() {
 			select {
@@ -61,9 +64,6 @@ func (gb *Gameboy) Start(cart *cartridge.Cartridge) {
 		}
 	})
 }
-
-// MaxCycles represents clock cycles executed for each frame.
-const MaxCycles = 69905
 
 // Update gameboy state.
 func (gb *Gameboy) Update() {

@@ -17,8 +17,8 @@ type PPURegisters struct {
 	WindowY     PPURegister
 }
 
-// InitRegisters is constructor for PPURegisters.
-func InitRegisters(mmu *memory.MMU) *PPURegisters {
+// NewPPURegisters is constructor for PPURegisters.
+func NewPPURegisters(mmu *memory.MMU) *PPURegisters {
 	mmu.Memory[0xff40] = 0x91
 	mmu.Memory[0xff41] = 0x85
 	return &PPURegisters{

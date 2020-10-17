@@ -23,7 +23,6 @@ const (
 	ScreenHeight = 144
 )
 
-
 // Keyboard to joypad button mappings.
 var keyMap = map[pixelgl.Button]JoypadButton{
 	pixelgl.KeyZ:         ButtonA,
@@ -46,11 +45,12 @@ type Display struct {
 	offset      int
 }
 
-// Init initializes display.
-func (display *Display) Init() {
+// Initialize sets up pixelgl display.
+func (display *Display) Initialize() {
 	cfg := pixelgl.WindowConfig{
-		Title:  "gomb",
-		Bounds: pixel.R(0, 0, ScreenWidth, ScreenHeight),
+		Title:     "gomb",
+		Bounds:    pixel.R(0, 0, ScreenWidth*2, ScreenHeight*2),
+		Resizable: true,
 	}
 	win, err := pixelgl.NewWindow(cfg)
 	if err != nil {
@@ -78,12 +78,6 @@ func (display *Display) Init() {
 // Run pixel application.
 func (display *Display) Run(f func()) {
 	pixelgl.Run(f)
-}
-
-// Init initializes new display.
-func Init() *Display {
-	display := &Display{}
-	return display
 }
 
 // Closed returns true if application is closed.

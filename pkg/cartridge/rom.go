@@ -12,11 +12,11 @@ func NewROM(rom []byte) *ROM {
 	}
 }
 
-// WriteToMB handles writes to ROM.
+// WriteMemory handles writes to ROM.
 // Since there is no memory bank controller, writes are not allowed.
-func (rom *ROM) WriteToMB(address uint16, value byte) { }
+func (rom *ROM) WriteMemory(address uint16, value byte) { }
 
-// ReadFromMB handles reads from ROM.
-func (rom *ROM) ReadFromMB(address uint16) byte {
+// ReadMemory handles reads from ROM.
+func (rom *ROM) ReadMemory(address uint16) byte {
 	return rom.data[address]
 }

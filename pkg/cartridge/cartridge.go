@@ -1,8 +1,6 @@
 package cartridge
 
 import (
-	"fmt"
-	"log"
 	"strings"
 )
 
@@ -22,33 +20,24 @@ type Cartridge struct {
 func NewCartridge(rom []byte) *Cartridge {
 	cart := &Cartridge{}
 	cart.Title = strings.Trim(string(rom[0x0134:0x0142]), "\x00")
-	switch rom[0x0147] {
-	case 0x00: // ROM only
-		cart.mbc = NewROM(rom)
-	case 0x01: // MBC 1
+
+	mbcType := rom[0x0147]
+	if mbcType >= 0x00 && mbcType <= 0x03 {
 		cart.mbc = NewMBC1(rom)
-	case 0x02: // MBC 1 + RA
-		cart.mbc = NewMBC1(rom)
-	case 0x03: // MBC 1 + RAM + Battery
-		cart.mbc = NewMBC1(rom)
-	case 0x05: // MBC 2
-		fmt.Println("Mbac2")
+	} else if mbcType >= 0x05 && mbcType <= 0x06 {
 		cart.mbc = NewMBC2(rom)
-	case 0x06: // MBC 2 + RAM + Battery
-		fmt.Println("Mbac2")
-		cart.mbc = NewMBC2(rom)
-	default:
-		log.Fatalf("MBC not implemented")
+	} else {
+		panic("MBC type not implemented for this cartridge.")
 	}
 	return cart
 }
 
-// Read from ROM or RAM
+// Read from ROM or RAM using memory banking controller.
 func (cart *Cartridge) Read(address uint16) byte {
 	return cart.mbc.ReadMemory(address)
 }
 
-// Write to ROM or RAM
+// Write to ROM or RAM memory banking controller.
 func (cart *Cartridge) Write(address uint16, value byte) {
 	cart.mbc.WriteMemory(address, value)
 }

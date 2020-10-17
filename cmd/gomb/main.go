@@ -24,7 +24,7 @@ func main() {
 	cart := cartridge.NewCartridge(rom)
 	fmt.Println(cart)
 
-	gb := emulator.Create()
+	gb := emulator.NewGameboy()
 	gb.Start(cart)
 	os.Exit(0)
 }

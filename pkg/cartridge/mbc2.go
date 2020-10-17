@@ -8,6 +8,7 @@ type MBC2 struct {
 	ramEnabled    bool
 }
 
+// NewMBC2 is a constructor for MBC2 type memory banking controller.
 func NewMBC2(rom []byte) *MBC2 {
 	return &MBC2{
 		rom:           rom,
@@ -16,6 +17,7 @@ func NewMBC2(rom []byte) *MBC2 {
 	}
 }
 
+// WriteMemory handles writes to MBC2.
 func (mbc *MBC2) WriteMemory(address uint16, value byte) {
 	if address < 0x2000 {
 		// Any value with 0x0a in the lower 4 bits enables RAM and other values disable it
@@ -33,6 +35,7 @@ func (mbc *MBC2) WriteMemory(address uint16, value byte) {
 	}
 }
 
+// ReadMemory handles reads from memory for MBC1.
 func (mbc *MBC2) ReadMemory(address uint16) byte {
 	if address < 0x4000 {
 		// ROM bank 0

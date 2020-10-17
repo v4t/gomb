@@ -60,7 +60,7 @@ func (interrupts *Interrupts) Read(address uint16) byte {
 	if address == 0xffff {
 		return interrupts.IE
 	} else if address == 0xff0f {
-		return interrupts.IF
+		return interrupts.IF | 0xe0 // 3 high bits always return 1
 	} else {
 		panic("Attempted to read interrupt registers with invalid memory address.")
 	}
@@ -71,7 +71,7 @@ func (interrupts *Interrupts) Write(address uint16, value byte) {
 	if address == 0xffff {
 		interrupts.IE = value
 	} else if address == 0xff0f {
-		interrupts.IF = value | 0xe0 // 3 high bits always return 1
+		interrupts.IF = value
 	} else {
 		panic("Attempted writing to interrupt registers with invalid memory address.")
 	}

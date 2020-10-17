@@ -19,8 +19,8 @@ type MMU struct {
 	Timer      MemoryRegion
 }
 
-// InitializeMMU creates new MMU instance.
-func InitializeMMU() *MMU {
+// NewMMU is a constructor for MMU.
+func NewMMU() *MMU {
 	mmu := MMU{Memory: make([]byte, math.MaxUint16+1)}
 	mmu.Memory[0xff05] = 0x00
 	mmu.Memory[0xff06] = 0x00
@@ -53,9 +53,6 @@ func InitializeMMU() *MMU {
 	mmu.Memory[0xff4a] = 0x00
 	mmu.Memory[0xff4b] = 0x00
 	mmu.Memory[0xffff] = 0x00
-
-	// Joypad
-	mmu.Memory[0xff00] = 0xcf
 	return &mmu
 }
 
@@ -81,7 +78,7 @@ func (mmu *MMU) Write(address uint16, value byte) {
 		// Echo ram
 		mmu.Memory[address] = value
 		mmu.Write(address-0x2000, value)
-	} else if (address >= 0xfea0) && (address < 0xfeff) {
+	} else if (address >= 0xfea0) && (address < 0xff00) {
 		// Restricted area
 		return
 	} else if address == 0xff44 {

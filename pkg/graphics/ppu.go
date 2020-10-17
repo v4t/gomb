@@ -29,12 +29,12 @@ type PPU struct {
 	clock int
 }
 
-// InitPPU is PPU constructor.
-func InitPPU(mmu *memory.MMU, display *Display) *PPU {
+// NewPPU is PPU constructor.
+func NewPPU(mmu *memory.MMU, display *Display) *PPU {
 	return &PPU{
 		MMU:       mmu,
 		Display:   display,
-		registers: InitRegisters(mmu),
+		registers: NewPPURegisters(mmu),
 	}
 }
 
@@ -42,7 +42,7 @@ func InitPPU(mmu *memory.MMU, display *Display) *PPU {
 func (ppu *PPU) Execute(cycles int) {
 	ppu.SetPPUState()
 	// Is LCD enabled?
-	if !utils.TestBit(ppu.MMU.Memory[0xFF40], 7) {
+	if !utils.TestBit(ppu.registers.LcdControl.Get(), 7) {
 		return
 	}
 	ppu.clock += cycles
@@ -64,7 +64,7 @@ func (ppu *PPU) Execute(cycles int) {
 func (ppu *PPU) SetPPUState() {
 	lcdStatus := ppu.registers.LcdStatus.Get()
 	// Is LCD enabled?
-	if !utils.TestBit(ppu.MMU.Memory[0xFF40], 7) {
+	if !utils.TestBit(ppu.registers.LcdControl.Get(), 7) {
 		ppu.resetPPU(lcdStatus)
 		return
 	}
@@ -120,7 +120,7 @@ func (ppu *PPU) resetPPU(lcdStatus byte) {
 }
 
 func (ppu *PPU) renderScanline() {
-	control := ppu.MMU.Read(0xff40)
+	control := ppu.registers.LcdControl.Get()
 	if utils.TestBit(control, 0) {
 		ppu.renderTiles()
 	}
@@ -137,6 +137,7 @@ func (ppu *PPU) renderTiles() {
 	var usingWindow bool = false
 
 	// Current register values
+	scanline := ppu.registers.Scanline.Get()
 	scrollY := ppu.registers.ScrollY.Get()
 	scrollX := ppu.registers.ScrollX.Get()
 	windowY := ppu.registers.WindowY.Get()
@@ -145,7 +146,7 @@ func (ppu *PPU) renderTiles() {
 
 	// Set tile rendering settings
 	if utils.TestBit(lcdControl, 5) {
-		if windowY <= ppu.registers.Scanline.Get() {
+		if windowY <= scanline {
 			usingWindow = true
 		}
 	}
@@ -172,9 +173,9 @@ func (ppu *PPU) renderTiles() {
 	// yPos represents the current vertical line
 	var yPos byte = 0
 	if !usingWindow {
-		yPos = scrollY + ppu.registers.Scanline.Get()
+		yPos = scrollY + scanline
 	} else {
-		yPos = ppu.registers.Scanline.Get() - windowY
+		yPos = scanline - windowY
 	}
 
 	// Current position of scanline on tile
@@ -208,7 +209,7 @@ func (ppu *PPU) renderTiles() {
 		// Push pixel to frame buffer
 		var colourBit int = ((int(xPos) % 8) - 7) * -1
 		var colourNum int = (utils.GetBit(data2, colourBit) << 1) | utils.GetBit(data1, colourBit)
-		ppu.Display.Draw(pixel, ppu.registers.Scanline.Get(), byte(colourNum))
+		ppu.Display.Draw(pixel, scanline, byte(colourNum))
 	}
 }
 
