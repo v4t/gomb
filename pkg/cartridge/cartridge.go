@@ -1,14 +1,15 @@
 package cartridge
 
 import (
+	"fmt"
 	"log"
 	"strings"
 )
 
 // MBC is an interface for various memory bank controllers.
 type MBC interface {
-	WriteToMB(address uint16, value byte)
-	ReadFromMB(address uint16) byte
+	WriteMemory(address uint16, value byte)
+	ReadMemory(address uint16) byte
 }
 
 // Cartridge manages gameboy cartridge related functionality.
@@ -25,15 +26,17 @@ func NewCartridge(rom []byte) *Cartridge {
 	case 0x00: // ROM only
 		cart.mbc = NewROM(rom)
 	case 0x01: // MBC 1
-		log.Fatalf("Not implemented: MBC 1")
+		cart.mbc = NewMBC1(rom)
 	case 0x02: // MBC 1 + RA
-		log.Fatalf("Not implemented: MBC 1 + RAM")
+		cart.mbc = NewMBC1(rom)
 	case 0x03: // MBC 1 + RAM + Battery
-		log.Fatalf("Not implemented: MBC 1 + RAM + Battery")
+		cart.mbc = NewMBC1(rom)
 	case 0x05: // MBC 2
-		log.Fatalf("Not implemented: MBC 2")
+		fmt.Println("Mbac2")
+		cart.mbc = NewMBC2(rom)
 	case 0x06: // MBC 2 + RAM + Battery
-		log.Fatalf("Not implemented: MBC 2 + RAM + Battery")
+		fmt.Println("Mbac2")
+		cart.mbc = NewMBC2(rom)
 	default:
 		log.Fatalf("MBC not implemented")
 	}
@@ -42,10 +45,10 @@ func NewCartridge(rom []byte) *Cartridge {
 
 // Read from ROM or RAM
 func (cart *Cartridge) Read(address uint16) byte {
-	return cart.mbc.ReadFromMB(address)
+	return cart.mbc.ReadMemory(address)
 }
 
 // Write to ROM or RAM
 func (cart *Cartridge) Write(address uint16, value byte) {
-	cart.mbc.WriteToMB(address, value)
+	cart.mbc.WriteMemory(address, value)
 }
